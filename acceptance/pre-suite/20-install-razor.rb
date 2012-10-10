@@ -1,10 +1,10 @@
 test_name "Install Razor using Puppet"
 
 step "install razor modules"
-on hosts, "puppet module install puppetlabs-razor"
+on hosts('razor-server'), "puppet module install puppetlabs-razor"
 
 step "configure razor"
-on hosts, puppet_apply("--verbose"), :stdin => %q'
+on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %q'
 class { sudo:
     config_file_replace => false,
 }
@@ -16,11 +16,12 @@ class { razor:
 '
 
 step "validate razor installation"
-on hosts, "/opt/razor/bin/razor_daemon.rb status" do
+on hosts('razor-server'), "/opt/razor/bin/razor_daemon.rb status" do
   assert_match(/razor_daemon: running/, stdout)
 end
 
 step "install gems to run the test suite"
-on hosts, puppet_apply("--verbose"), :stdin => %q'
+on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %q'
   package { [rake, rspec, mocha, net-ssh]: ensure => installed, provider => gem }
+  package { curl: ensure => installed }
 '
