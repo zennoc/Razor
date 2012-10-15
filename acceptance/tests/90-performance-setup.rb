@@ -8,7 +8,6 @@ on Razor, "mongo project_razor --eval 'db.dropDatabase()'"
 step "Restart the razor daemon"
 on Razor, "/opt/razor/bin/razor_daemon.rb restart"
 
-
 def add_image(args = {})
   what = args[:name] || args[:type]
   uuid = nil
@@ -21,8 +20,11 @@ def add_image(args = {})
 
   step "Install the #{what} image"
   on Razor, "razor image add #{args} --path #{iso}" do
-    uuid = (/UUID => +([a-zA-Z0-9]+)$/.match(stdout) || [])[1]
-    uuid.length < 22 and fail_test("unable to match the #{what} UUID from Razor")
+    match = /UUID => +([a-zA-Z0-9]+)$/.match(stdout) || []
+    uuid  = match[1]
+    if !uuid or uuid.length < 22
+      fail_test("unable to match the #{what} UUID from Razor:\nmatch: #{match.inspect}\nuuid:  #{uuid.inspect}\nout:\n#{stdout}")
+    end
   end
 
   step "Remove the ISO image"
@@ -31,8 +33,12 @@ def add_image(args = {})
   return uuid
 end
 
-exi    = add_image(:type => 'esxi', :url  => "http://faro.puppetlabs.lan/Software/VMware/VMware-VMvisor-Installer-5.0.0-469512.x86_64.iso")
+step "Add OS images to Razor"
+mk     = add_image(:type => 'mk', :url => "https://github.com/downloads/puppetlabs/Razor-Microkernel/rz_mk_prod-image.0.9.1.6.iso")
+exi    = add_image(:type => 'esxi', :url => "http://faro.puppetlabs.lan/Software/VMware/VMware-VMvisor-Installer-5.0.0-469512.x86_64.iso")
 ubuntu = add_image(:type => 'os', :name => 'ubuntu', :version => '1204', :url => "http://faro.puppetlabs.lan/ISO/Ubuntu/ubuntu-12.04-server-amd64.iso")
-centos = add_image(:type => 'os', :name => 'centos', :version => '62', :url => "http://faro.puppetlabs.lan/ISO/CentOS/CentOS-6.2-x86_64-minimal.iso")
 
-
+# The simulator doesn't have a CentOS / EL scenario yet, but we should add
+# one fairly soon.  When you do:
+#
+# centos = add_image(:type => 'os', :name => 'centos', :version => '62', :url => "http://faro.puppetlabs.lan/ISO/CentOS/CentOS-6.2-x86_64-minimal.iso")
