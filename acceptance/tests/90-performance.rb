@@ -24,7 +24,7 @@ def add_image(args = {})
   on Razor, "razor image add #{args} --path #{iso}" do
     match = /UUID => +([a-zA-Z0-9]+)$/.match(stdout) || []
     uuid  = match[1]
-    if !uuid or uuid.length < 22
+    if !uuid or uuid.length < 21
       fail_test("unable to match the #{what} UUID from Razor:\nmatch: #{match.inspect}\nuuid:  #{uuid.inspect}\nout:\n#{stdout}")
     end
   end
