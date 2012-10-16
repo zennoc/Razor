@@ -50,22 +50,20 @@ on Razor, "/opt/razor/bin/razor_daemon.rb status || /opt/razor/bin/razor_daemon.
 step "Running perftest suite"
 on Razor, "cd /tmp/perftest && " +
   "./perftest --target=localhost --esxi-uuid=#{ImageUUIDS['esxi']} " +
-  "--ubuntu-uuid=#{ImageUUIDS['ubuntu']} --load=30 --population=5000"
+  "--ubuntu-uuid=#{ImageUUIDS['ubuntu']} --load=10 --population=5000"
 
 step "Fetch back performance results"
+perf = Pathname('perf')
+perf.directory? and perf.rmtree
+
 Razor.each do |host|
-  dir = Pathname('perf') + host
+  dir = perf + host
   dir.mkpath
 
   on host, "ls /tmp/perftest/*.{csv,jtl}", :acceptable_exit_codes => 0..65535 do
     stdout.split("\n").each do |file|
       next if file.include? '/*.' # nothing matches
-
-      # This should be "scp_from", but that doesn't exist, so we live with
-      # bloating our debug output with a copy of the data as well. :)
-      on host, "cat #{file}" do
-        (dir + Pathname(file).basename).open('wb') {|io| io.print stdout }
-      end
+      scp_from(host, file, dir + Pathname(file).basename)
     end
   end
 end

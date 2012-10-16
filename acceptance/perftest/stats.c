@@ -3,6 +3,8 @@
 #include <glib.h>
 #include <uriparser/Uri.h>
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
 
 struct Stats {
   TestSuite*    suite;
@@ -117,12 +119,50 @@ static void write_concurrency(Stats *stats) {
   fclose(c);
 }
 
+typedef struct WriteNetworkClosure {
+  FILE*        csv;
+  GHashTable*  jtl;
+} WriteNetworkClosure;
+
+static FILE* get_jtl_file_handle(
+  GHashTable* table, const gchar* scenario, const gchar* part, const gchar* service
+) {
+  gchar* filename = g_strdup_printf("%s-%s-%s.jtl", scenario, part, service);
+
+  FILE* result = g_hash_table_lookup(table, filename);
+  if (result) {
+    g_free(filename);
+    return result;
+  }
+
+  result = fopen(filename, "wb");
+  if (!result) {
+    g_critical("can't open %s for output: %s", filename, strerror(errno));
+    exit(1);
+  }
+
+  /* the hash table now owns the filename string */
+  g_hash_table_insert(table, filename, result);
+
+  /* the file header... */
+  fprintf(result, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  fprintf(result, "<testResults version=\"2.1\">\n");
+
+  return result;
+}
+
+static void close_jtl_file(gpointer data_) {
+  FILE* jtl = data_;
+  fprintf(jtl, "</testResults>\n");
+  fclose(jtl);
+}
+
 static gboolean write_network_url_entry(
   gpointer key_, gpointer value_, gpointer data_
 ) {
-  const char* url     = key_;
-  GPtrArray*  samples = value_;
-  FILE*       out     = data_;
+  const char*          url     = key_;
+  GPtrArray*           samples = value_;
+  WriteNetworkClosure* closure = data_;
 
   URI* uri = parse_uri(url);
 
@@ -147,11 +187,29 @@ static gboolean write_network_url_entry(
     EventFinished* record = samples->pdata[i];
     const Event*   event  = record->event;
     fprintf(
-      out, "%s, %s, %s, %s, %s, %f, %f\n",
+      closure->csv, "%s, %s, %s, %s, %s, %f, %f\n",
       event->scenario_part->scenario->name, event->scenario_part->name,
       uri->scheme, service, uri->path,
       relative_time(record->start, record->first_data),
       relative_time(record->start, record->finish)
+    );
+
+    FILE* jtl = get_jtl_file_handle(
+      closure->jtl,
+      event->scenario_part->scenario->name, event->scenario_part->name,
+      service
+    );
+    fprintf(
+      jtl,
+      "  <sample sc=\"1\" ts=\"%ld\" t=\"%f\" lt=\"%f\" ec=\"%d\" s=\"%s\" "
+      "by=\"%ld\", lb=\"%s\" />\n",
+      record->start / 1000,                             /* timestamp, milliseconds */
+      relative_time(record->start, record->finish),     /* elapsed time */
+      relative_time(record->start, record->first_data), /* latency */
+      record->successful ? 0 : 1,                       /* error count */
+      record->successful ? "true" : "false",            /* success */
+      record->bytes,                                    /* byte count */
+      record->event->url                                /* label */
     );
   }
 
@@ -161,10 +219,18 @@ static gboolean write_network_url_entry(
 }
 
 static void write_network_data(Stats *stats) {
-  FILE* c = fopen("network.csv", "wb");
-  fprintf(c, "scenario, part, scheme, service, path, first_byte, total\n");
-  g_tree_foreach(stats->by_url, write_network_url_entry, c);
-  fclose(c);
+  WriteNetworkClosure closure = {
+    .csv = fopen("network.csv", "wb"),
+    /* hash string => FILE* */
+    .jtl = g_hash_table_new_full(
+      g_str_hash, g_str_equal, g_free, close_jtl_file
+    )
+  };
+  fprintf(closure.csv, "scenario, part, scheme, service, path, first_byte, total\n");
+  g_tree_foreach(stats->by_url, write_network_url_entry, &closure);
+  fclose(closure.csv);
+  /* this will close all files, free the keys, and destroy the object */
+  g_hash_table_unref(closure.jtl);
 }
 
 
@@ -204,7 +270,7 @@ void stats_print_report(Stats* stats) {
   write_concurrency(stats);
   g_print("done\n");
 
-  g_print(" - network.csv: ");
+  g_print(" - network.csv, network-*.jtl: ");
   write_network_data(stats);
   g_print("done\n");
 
