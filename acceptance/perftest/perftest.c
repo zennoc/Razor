@@ -16,12 +16,15 @@ typedef struct ScenarioClosure {
 
 typedef struct ProgressClosure {
   TestSuite*       suite;
+  guint            cycle;
   ScenarioClosure* physical;
   ScenarioClosure* virtual;
 } ProgressClosure;
 
 
 static gboolean scenario_progress(ProgressClosure* closure) {
+  closure->cycle += 1;
+
   /* turn this into a number of seconds, rounding down... */
   guint runtime = (g_get_monotonic_time() - closure->suite->start_time) / 1000000;
 
@@ -39,6 +42,15 @@ static gboolean scenario_progress(ProgressClosure* closure) {
   /* now, work out if we are actually *finished* our simulation... */
   if (pending == 0 && threads == 0 && queued == 0)
     g_main_loop_quit(closure->suite->loop);
+
+  /* work out if we ran out of time... */
+  if (closure->cycle > closure->suite->max_cycles) {
+    g_print("ERROR: ran for more than %d seconds, aborting!\n",
+            closure->suite->max_cycles);
+    g_thread_pool_free(closure->suite->pool, TRUE, FALSE);
+    g_print("...finished aborting all threads.\n");
+    g_main_loop_quit(closure->suite->loop);
+  }
 
   return TRUE;
 }
@@ -94,11 +106,13 @@ int main(int argc, char* argv[]) {
     "Testing will run for %d second%s performing scheduling\n"
     "  with %4d (simulated) physical refresh%s\n"
     "  and  %4d (simulated) virtual refresh%s\n"
-    "  total rate approximately %.2f refreshes per second\n",
+    "  total rate approximately %.2f refreshes per second\n"
+    "  for a maximum of %d seconds\n",
     suite->approximate_runtime, suite->approximate_runtime == 1 ? "" : "s",
     physical_closure.runs, physical_closure.runs == 1 ? "" : "es",
     virtual_closure.runs,  virtual_closure.runs  == 1 ? "" : "es",
-    suite->physical_refreshes_per_second + suite->virtual_refreshes_per_second
+    suite->physical_refreshes_per_second + suite->virtual_refreshes_per_second,
+    suite->max_cycles
   );
 
   g_timeout_add_full(
@@ -113,6 +127,7 @@ int main(int argc, char* argv[]) {
 
   ProgressClosure progress = {
     .suite       = suite,
+    .cycle       = 0,
     .physical    = &physical_closure,
     .virtual     = &virtual_closure
   };
