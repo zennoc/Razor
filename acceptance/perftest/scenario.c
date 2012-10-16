@@ -9,6 +9,7 @@ static char*  esxi_uuid                = NULL;
 static char*  ubuntu_uuid              = NULL;
 static guint  load                     = 30;
 static guint  population               = 20000;
+static guint  max_cycles               = 600;
 static double physical_refresh_percent = 0.025; /* 2.5 percent per day */
 static double virtual_refresh_percent  = 0.200; /* 20 percent per day */
 static guint  virtual_per_physical     = 20;    /* VM multiplier */
@@ -20,6 +21,8 @@ static GOptionEntry options[] = {
     "The Razor ESXi OS image UUID", "UUID" },
   { "ubuntu-uuid", 0, 0, G_OPTION_ARG_STRING, &ubuntu_uuid,
     "The Razor Ubuntu OS image UUID", "UUID" },
+  { "max",  'm', 0, G_OPTION_ARG_INT, &max_cycles,
+    "Maximum seconds runtime", "SECONDS" },
   { "load", 'l', 0, G_OPTION_ARG_INT, &load,
     "How many simulated refresh events to perform", "COUNT" },
   { "population", 'p', 0, G_OPTION_ARG_INT, &population,
@@ -214,6 +217,7 @@ TestSuite* test_suite_setup(int* argc, char*** argv) {
   suite->stats = stats_new(suite);
 
   /* calculate our run rates, etc */
+  suite->max_cycles               = max_cycles;
   suite->target                   = target;
   suite->load                     = load;
   suite->physical_nodes           = population;

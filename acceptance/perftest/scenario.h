@@ -30,6 +30,8 @@ struct TestSuite {
   GThreadPool*  pool;
   GMainLoop*    loop;
 
+  guint  max_cycles;
+
   char*  target;
   guint  load;
   guint  physical_nodes;
