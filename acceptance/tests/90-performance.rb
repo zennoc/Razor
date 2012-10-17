@@ -64,8 +64,10 @@ package { "make":                ensure => installed }
 step "Build perftest"
 on Razor, "cd /tmp/perftest && make"
 
-step "Ensure that Razor is running"
-on Razor, "/opt/razor/bin/razor_daemon.rb status || /opt/razor/bin/razor_daemon.rb start"
+step "Ensure that Razor is running cleanly"
+on Razor, "/opt/razor/bin/razor_daemon.rb stop"
+on Razor, "/opt/razor/bin/razor_daemon.rb start"
+on Razor, "service xinetd restart"
 
 step "Running perftest suite"
 on Razor, "cd /tmp/perftest && " +
