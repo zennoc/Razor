@@ -81,6 +81,11 @@ perf.directory? and perf.rmtree
 Razor.each do |host|
   dir = perf + host
   dir.mkpath
-  scp_from(host, "/tmp/perftest/*.csv", dir)
-  scp_from(host, "/tmp/perftest/*.jtl", dir)
+
+  on host, "ls /tmp/perftest/*.{csv,jtl}", :acceptable_exit_codes => 0..65535 do
+    stdout.split("\n").each do |file|
+      next if file.include? '/*.' # nothing matches
+      scp_from(host, file, dir + Pathname(file).basename)
+    end
+  end
 end
