@@ -157,6 +157,38 @@ static void close_jtl_file(gpointer data_) {
   fclose(jtl);
 }
 
+static gboolean entity_replace_callback(
+  const GMatchInfo *info,
+  GString          *result,
+  gpointer         data_
+) {
+  gchar* match = g_match_info_fetch(info, 0);
+
+  switch (match[0]) {
+  case '\'':
+    g_string_append(result, "&apos;");
+    break;
+  case '"':
+    g_string_append(result, "&quot;");
+    break;
+  case '>':
+    g_string_append(result, "&gt;");
+    break;
+  case '<':
+    g_string_append(result, "&lt;");
+    break;
+  case '&':
+    g_string_append(result, "&amp;");
+    break;
+  default:
+    g_print("unknown entity replacement '%s'", match);
+    exit(1);
+  }
+
+  g_free(match);
+  return FALSE;                 /* continue replacing */
+}
+
 static gboolean write_network_url_entry(
   gpointer key_, gpointer value_, gpointer data_
 ) {
@@ -183,6 +215,13 @@ static gboolean write_network_url_entry(
   }
 
   /** @todo danielp 2012-10-11: this should be pre-decoded for us, maybe? */
+  GError* error = NULL;
+  GRegex *entities = g_regex_new("['\"><&]", 0, 0, &error);
+  if (!entities || error) {
+    g_print("failed to compile entity regex: %s", error->message);
+    exit(1);
+  }
+
   for (int i = 0; i < samples->len; ++i) {
     EventFinished* record = samples->pdata[i];
     const Event*   event  = record->event;
@@ -199,6 +238,18 @@ static gboolean write_network_url_entry(
       event->scenario_part->scenario->name, event->scenario_part->name,
       service
     );
+
+    gchar* safe_url = g_regex_replace_eval(
+      entities, record->event->url, -1, /* regex, string, strlen */
+      0, 0,                             /* start position, flags */
+      entity_replace_callback, NULL, &error
+    );
+    if (!safe_url || error) {
+      g_print("failed to regex-replacify URL '%s': %s",
+              record->event->url, error->message);
+      exit(1);
+    }
+
     fprintf(
       jtl,
       "  <sample sc=\"1\" ts=\"%ld\" t=\"%f\" lt=\"%f\" ec=\"%d\" s=\"%s\" "
@@ -209,8 +260,10 @@ static gboolean write_network_url_entry(
       record->successful ? 0 : 1,                       /* error count */
       record->successful ? "true" : "false",            /* success */
       record->bytes,                                    /* byte count */
-      record->event->url                                /* label */
+      safe_url                                          /* label */
     );
+
+    g_free(safe_url);
   }
 
   free_uri(uri);
