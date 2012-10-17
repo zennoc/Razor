@@ -202,7 +202,7 @@ static gboolean write_network_url_entry(
     fprintf(
       jtl,
       "  <sample sc=\"1\" ts=\"%ld\" t=\"%f\" lt=\"%f\" ec=\"%d\" s=\"%s\" "
-      "by=\"%ld\", lb=\"%s\" />\n",
+      "by=\"%ld\" lb=\"%s\" />\n",
       record->start / 1000,                             /* timestamp, milliseconds */
       relative_time(record->start, record->finish),     /* elapsed time */
       relative_time(record->start, record->first_data), /* latency */
