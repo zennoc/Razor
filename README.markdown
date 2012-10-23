@@ -10,6 +10,23 @@ provides broker plugins for integration with third party such as Puppet.
 
 This is a 0.x release, so the CLI and API is still in flux and may change. Make sure you __read the release notes before upgrading__
 
+## How to Get Help
+
+We really want Razor to be simple to contribute to, and to ensure that you can
+get started quickly.  A big part of that is being available to help you figure
+out the right way to solve a problem, and to make sure you get up to
+speed quickly.
+
+You can always reach out and ask for help:
+
+* by email or through the web on the [puppet-razor@googlegroups.com][puppet-razor]
+  mailing list.  (membership is required to post.)
+* by IRC, through [#puppet-razor][irc] on [freenode][freenode].
+
+[puppet-razor]: https://groups.google.com/forum/?fromgroups#!forum/puppet-razor
+[irc]:            irc://chat.freenode.net/puppet-razor
+[freenode]:   http://freenode.net/
+
 ## Authors
 
 * [Nicholas Weaver](https://github.com/lynxbat)
