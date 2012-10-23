@@ -17,11 +17,17 @@ module ProjectRazor
         # init correct database object
         if (config.persist_mode == :mongo)
           logger.debug "Using Mongo plugin"
+          require "project_razor/persist/mongoplugin" unless ProjectRazor::Persist.const_defined?(:MongoPlugin)
           @database = ProjectRazor::Persist::MongoPlugin.new
-          check_connection
+        elsif (config.persist_mode == :postgres)
+          logger.debug "Using Postgres plugin"
+          require "project_razor/persist/postgresplugin" unless ProjectRazor::Persist.const_defined?(:PostgresPlugin)
+          @database = ProjectRazor::Persist::PostgresPlugin.new
         else
           logger.error "Invalid Database plugin(#{config.persist_mode})"
+          return;
         end
+        check_connection
       end
 
       # This is where all connection teardown is started. Calls the '@database.teardown'

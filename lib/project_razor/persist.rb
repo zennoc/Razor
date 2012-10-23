@@ -1,5 +1,5 @@
+require "project_razor/persist/error"
 require "project_razor/persist/controller"
-require "project_razor/persist/mongoplugin"
 
 module ProjectRazor
   module Persist
