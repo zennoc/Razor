@@ -22,6 +22,10 @@ require "optparse"
 # from objectspace
 SLICE_PREFIX = "ProjectRazor::Slice::"
 
+def file2const(filename)
+  filename.to_s.split('_').map(&:capitalize).join
+end
+
 #
 def init
   @obj = ProjectRazor::Object.new
@@ -31,10 +35,11 @@ def init
 end
 
 # Call the slice
-def call_razor_slice(name)
+def call_razor_slice(raw_name, args)
+  name = file2const(raw_name)
   begin
     if is_slice?(name)
-      razor_module = Object.full_const_get(SLICE_PREFIX + name.capitalize).new(@args)
+      razor_module = Object.full_const_get(SLICE_PREFIX + name.capitalize).new(args)
       razor_module.web_command = @web_command
       razor_module.verbose = @verbose
       razor_module.debug = @debug
@@ -42,11 +47,9 @@ def call_razor_slice(name)
     else
       if @web_command
         puts JSON.dump({"slice" => "ProjectRazor::Slice", "result" => "InvalidSlice", "http_err_code" => 404})
-      else
-        if name
-          print "\n [#{name.capitalize}] ".red
-          print "<-Invalid Slice \n".yellow
-        end
+      elsif raw_name
+          print "\n [#{raw_name}] ".red
+        print "<-Invalid Slice \n".yellow
       end
     end
   rescue => e
@@ -186,6 +189,4 @@ if ARGV.empty? && !@web_command
   print_loaded_slices
 end
 
-@args = ARGV
-
-call_razor_slice(ARGV.shift)
+call_razor_slice(ARGV.shift, ARGV)
