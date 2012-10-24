@@ -3,10 +3,10 @@ require "json"
 
 # Root ProjectRazor namespace
 module ProjectRazor
-  module Slice
+  class Slice
 
     # ProjectRazor Slice Active_Model
-    class Active_model < ProjectRazor::Slice::Base
+    class Active_model < ProjectRazor::Slice
       def initialize(args)
         super(args)
         @hidden          = false
