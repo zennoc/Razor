@@ -39,7 +39,7 @@ def call_razor_slice(raw_name, args)
   name = file2const(raw_name)
   begin
     if is_slice?(name)
-      razor_module = Object.full_const_get(SLICE_PREFIX + name.capitalize).new(args)
+      razor_module = Object.full_const_get(SLICE_PREFIX + name).new(args)
       razor_module.web_command = @web_command
       razor_module.verbose = @verbose
       razor_module.debug = @debug
@@ -49,13 +49,13 @@ def call_razor_slice(raw_name, args)
         puts JSON.dump({"slice" => "ProjectRazor::Slice", "result" => "InvalidSlice", "http_err_code" => 404})
       elsif raw_name
           print "\n [#{raw_name}] ".red
-        print "<-Invalid Slice \n".yellow
+          print "<-Invalid Slice \n".yellow
       end
     end
   rescue => e
     @logger.error "Razor slice error: #{e.message}"
     if name
-      print "\n [#{name.capitalize}] ".red
+      print "\n [#{name}] ".red
       print "<-#{e.message} \n".yellow
     else
       print "\nMust Enter Slice Name \n".yellow
@@ -66,18 +66,13 @@ end
 
 # Load slices
 def get_slices_loaded
-  temp_hash = {}
-
   slice_path = File.expand_path(File.join(File.dirname(__FILE__), "..", "lib/project_razor/slice/*.rb"))
 
+  @slice_array = []
   Dir.glob(slice_path) do |f|
-    name = File.basename(f,File.extname(f)).capitalize
-    temp_hash[SLICE_PREFIX+name] = name unless name == 'Slice'
+    @slice_array << file2const(File.basename(f,File.extname(f)))
   end
 
-  @slice_array = {}
-  temp_hash.each_value {|x| @slice_array[x] = x}
-  @slice_array = @slice_array.each_value.collect {|x| x}
 end
 
 # Validate slice
@@ -89,7 +84,7 @@ def print_loaded_slices
   print "\nLoaded slices:\n\t"
   x = 1
   @slice_array.sort.each do |slice|
-    slice_obj = ::Object.full_const_get(SLICE_PREFIX + slice.capitalize).new([])
+    slice_obj = ::Object.full_const_get(SLICE_PREFIX + slice).new([])
     unless slice_obj.hidden
       print "[#{slice.downcase}] ".white
       if x > 5
