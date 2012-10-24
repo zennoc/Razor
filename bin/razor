@@ -26,12 +26,15 @@ def file2const(filename)
   filename.to_s.split('_').map(&:capitalize).join
 end
 
+def const2file(const)
+  const.to_s.split(/(?=[A-Z])/).map(&:downcase).join('_')
+end
+
 #
 def init
   @obj = ProjectRazor::Object.new
   @version = @obj.get_razor_version
   @logger = @obj.get_logger
-  get_slices_loaded
 end
 
 def call_razor_slice(raw_name, args)
@@ -54,24 +57,15 @@ rescue => e
   return false
 end
 
-# Load slices
-def get_slices_loaded
-  slice_path = File.expand_path(File.join(File.dirname(__FILE__), "..", "lib/project_razor/slice/*.rb"))
-
-  @slice_array = []
-  Dir.glob(slice_path) do |f|
-    @slice_array << file2const(File.basename(f,File.extname(f)))
-  end
-
-end
-
-def print_loaded_slices
-  print "\nLoaded slices:\n\t"
+def print_available_slices
+  print "\n", "Available slices:\n\t"
   x = 1
-  @slice_array.sort.each do |slice|
+  slice_path = File.expand_path(File.join(File.dirname(__FILE__), "..", "lib/project_razor/slice/*.rb"))
+  slices = Dir.glob(slice_path).map {|f| file2const(File.basename(f,File.extname(f))) }
+  slices.sort.uniq.each do |slice|
     slice_obj = ::Object.full_const_get(SLICE_PREFIX + slice).new([])
     unless slice_obj.hidden
-      print "[#{slice.downcase}] ".white
+      print "[#{const2file(slice)}] ".white
       if x > 5
         print "\n\t"
         x = 0
@@ -113,7 +107,7 @@ def get_optparse
 
     opts.on_tail( '-h', '--help', 'Display this screen'.yellow ) do
       puts opts
-      print_loaded_slices
+      print_available_slices
       exit
     end
   end
@@ -175,7 +169,7 @@ unless call_razor_slice(slice, ARGV)
       })
   else
     puts optparse
-    print_loaded_slices
+    print_available_slices
     if slice
       print "\n [#{slice}] ".red
       print "<-Invalid Slice \n".yellow
