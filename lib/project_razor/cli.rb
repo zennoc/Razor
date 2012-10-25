@@ -9,6 +9,13 @@ class ProjectRazor::CLI
   # slice names back out from objectspace
   SLICE_PREFIX = "ProjectRazor::Slice::"
 
+  # Create a new instance of the CLI dispatcher, ready to service requests.
+  def initialize
+    @obj = ProjectRazor::Object.new
+    @version = @obj.get_razor_version
+    @logger = @obj.get_logger
+  end
+
   # Run a single invocation of a command line from Razor; this translates the
   # command line into a slice invocation, parsing options along the way, and
   # eventually reports back the result.
@@ -16,8 +23,6 @@ class ProjectRazor::CLI
   # @param [Array<String>] the command line arguments
   # @return [Boolean] true on success, false on failure
   def run(*argv)
-    # Initialise some values
-    init
     first_args = get_first_args(argv)
     first_args.size.times {argv.shift}
     @options = {}
@@ -73,12 +78,6 @@ class ProjectRazor::CLI
   end
 
   private
-
-  def init
-    @obj = ProjectRazor::Object.new
-    @version = @obj.get_razor_version
-    @logger = @obj.get_logger
-  end
 
   def call_razor_slice(raw_name, args)
     return nil if raw_name.nil?
