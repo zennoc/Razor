@@ -12,7 +12,6 @@ class ProjectRazor::CLI
   # Create a new instance of the CLI dispatcher, ready to service requests.
   def initialize
     @obj = ProjectRazor::Object.new
-    @version = @obj.get_razor_version
     @logger = @obj.get_logger
   end
 
@@ -100,7 +99,7 @@ class ProjectRazor::CLI
   end
 
   def print_available_slices
-    print "\n", "Available slices:\n\t"
+    print "\n", "Available slices\n\t".yellow
     x = 1
     slice_path = File.expand_path(File.join(File.dirname(__FILE__), 'slice', '*.rb'))
     slices = Dir.glob(slice_path).map {|f| file2const(File.basename(f,File.extname(f))) }
@@ -120,9 +119,10 @@ class ProjectRazor::CLI
 
   def get_optparse
     OptionParser.new do |opts|
-      opts.banner = "\n" + "Razor - #{@version}".bold.green
-      opts.separator "Usage: "
-      opts.separator "razor [slice name] [command argument] [command argument]...".red
+      opts.version   = ProjectRazor::VERSION
+      opts.banner    = "#{opts.program_name} - #{opts.version}".green
+      opts.separator "Usage: ".yellow
+      opts.separator "    razor [slice name] [command argument] [command argument]...".red
       opts.separator ""
       opts.separator "Switches".yellow
 
@@ -146,8 +146,13 @@ class ProjectRazor::CLI
         @options[:nocolor] = true
       end
 
+      opts.on_tail('-V', '--version', 'Display the version of Razor'.yellow) do
+        print opts.banner
+        exit
+      end
+
       opts.on_tail( '-h', '--help', 'Display this screen'.yellow ) do
-        puts opts
+        print opts
         print_available_slices
         exit
       end
