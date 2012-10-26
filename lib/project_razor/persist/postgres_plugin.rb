@@ -1,11 +1,12 @@
 require "securerandom"
 require "pg"
 
-# PostgreSQL version of ProjectRazor::Controller::Plugin
-# used by ProjectRazor::Controller when ':postgres' is the 'persist_mode' in ProjectRazor configuration
 module ProjectRazor
   module Persist
-    class PostgresPlugin
+    # PostgreSQL version of {ProjectRazor::Persist::PluginInterface}
+    # used by {ProjectRazor::Persist::Controller} when ':postgres' is the 'persist_mode'
+    # in ProjectRazor configuration
+    class PostgresPlugin < PluginInterface
       include(ProjectRazor::Logging)
       def initialize
         @statements = Set.new # Set to keep track of named prepared statements
@@ -13,7 +14,7 @@ module ProjectRazor
 
       # Closes connection if it is active
       #
-      # @return [true, false] - returns connection status
+      # @return [Boolean] Connection status
       #
       def teardown
         logger.debug "Connection teardown"
@@ -26,9 +27,8 @@ module ProjectRazor
       #
       # @param hostname DNS name or IP-address of host
       # @param port [Integer] Port number to use when connecting to the host
-      # @param dbname Name of the database
       # @param timeout [Integer] Connection timeout
-      # @return [true, false] - returns connection status
+      # @return [Boolean] Connection status
       #
       def connect(hostname, port, timeout)
         logger.debug "Connecting to PostgreSQL (#{hostname}:#{port}) with timeout (#{timeout})"
@@ -48,7 +48,7 @@ module ProjectRazor
 
       # Disconnects connection
       #
-      # @return [true, false] - returns connection status
+      # @return [Boolean] Connection status
       #
       def disconnect
         logger.debug "Disconnecting from PostgreSQL server"
@@ -59,16 +59,16 @@ module ProjectRazor
 
       # Checks whether the database is connected and active
       #
-      # @return [true, false]
+      # @return [Boolean] Connection status
       #
       def is_db_selected?
         @connection != nil and not @connection.finished?
       end
 
-      # Returns all entries from the specified collection
+      # Returns all entries from the collection named 'collection_name'
       #
       # @param collection_name [Symbol]
-      # @return [Array]
+      # @return [Array<Hash>]
       #
       def object_doc_get_all(collection_name)
         statement_name = "all:#{collection_name}"
@@ -78,7 +78,8 @@ module ProjectRazor
         exec_select_on_collection(statement_name, [])
       end
 
-      # Returns the entry keyed by the uuid of the given object_doc from the specified collection
+      # Returns the entry keyed by the '@uuid' of the given 'object_doc' from the collection
+      # named 'collection_name'
       #
       # @param object_doc [Hash]
       # @param collection_name [Symbol]
@@ -93,11 +94,12 @@ module ProjectRazor
         return hits.count == 0 ? nil : hits[0]
       end
 
-      # Adds or updates object document in the collection
+      # Adds or updates 'obj_document' in the collection named 'collection_name' with an incremented
+      # '@version' value
       #
       # @param object_doc [Hash]
       # @param collection_name [Symbol]
-      # @return [Hash] The updated [Hash] of doc
+      # @return [Hash] The updated doc
       #
       def object_doc_update(object_doc, collection_name)
         logger.debug "Update document in collection (#{collection_name}) with uuid (#{object_doc['@uuid']})"
@@ -106,6 +108,13 @@ module ProjectRazor
         object_doc
       end
 
+      # Adds or updates multiple object documents in the collection named 'collection_name'. This will
+      # increase the '@version' value of all the documents
+      #
+      # @param object_docs [Array<Hash>]
+      # @param collection_name [Symbol]
+      # @return [Array<Hash>] The updated documents
+      #
       def object_doc_update_multi(object_docs, collection_name)
         logger.debug "Update documents in collection (#{collection_name})"
         ensure_prepared_update_statements(collection_name)
@@ -118,11 +127,12 @@ module ProjectRazor
         object_docs
       end
 
-      # Removes a document identified by from the '@uuid' of the given 'object_doc' from the collection
+      # Removes a document identified by from the '@uuid' of the given 'object_doc' from the
+      # collection named 'collection_name'
       #
       # @param object_doc [Hash]
       # @param collection_name [Symbol]
-      # @return [true, Hash] - returns 'true' if an object was removed, 'false' if not
+      # @return [Boolean] - returns 'true' if an object was removed
       #
       def object_doc_remove(object_doc, collection_name)
         statement_name = "delete:#{collection_name}"
@@ -134,11 +144,10 @@ module ProjectRazor
         return result.cmd_tuples() == 1
       end
 
-      # Removes all documents from collection: 'collection_name' with 'uuid' in 'object_doc''
+      # Removes all documents from the collection named 'collection_name'
       #
-      # @param object_doc [Hash]
       # @param collection_name [Symbol]
-      # @return [true, Hash] - returns 'true' if successful, otherwise returns 'Hash' with last error
+      # @return [Boolean] - returns 'true' if successful
       #
       def object_doc_remove_all(collection_name)
         statement_name = "delete_all:#{collection_name}"
@@ -187,7 +196,7 @@ module ProjectRazor
       # If the version is not 0, then it will be incremented by one and the corresponding record in the
       # table will be updated.
       #
-      # @param conn [PG::Connection]
+      # @param conn [PG::Connection] The connection for the current the transaction
       # @param object_doc [Hash] The document to update
       # @param collection_name [Symbol] The name of the collection where the document is stored
       # @return The updated document (with new version)
@@ -202,11 +211,13 @@ module ProjectRazor
         table_update(conn, object_doc, collection_name)
       end
 
-      # Fetch the current version for the given uuid
-      # @param conn [PG::Connection]
+      # Fetch the current version for the given 'uuid' from the collection named 'collection_name'
+      #
+      # @param conn [PG::Connection] The connection for the current the transaction
       # @param uuid [String] The uuid to fetch the version for
       # @param collection_name [Symbol] The name of the collection where the document is stored
       # @return The document or nil if not found
+      #
       def table_fetch_version(conn, uuid, collection_name)
         raise ArgumentError.new("document has no uuid") if uuid === nil
         statement_name = "version:#{collection_name}"
@@ -216,7 +227,7 @@ module ProjectRazor
 
       # Insert document into table
       #
-      # @param conn [PG::Connection]
+      # @param conn [PG::Connection] The connection for the current the transaction
       # @param object_doc [Hash] The document to insert
       # @param collection_name [Symbol] The name of the collection where the document is stored
       # @return The updated document (with version 1)
@@ -242,7 +253,7 @@ module ProjectRazor
 
       # Update document in table
       #
-      # @param conn [PG::Connection]
+      # @param conn [PG::Connection] The connection for the current the transaction
       # @param object_doc [Hash] The document to update
       # @param collection_name [Symbol] The name of the collection where the document is stored
       # @return The updated document (with new version)
@@ -268,8 +279,7 @@ module ProjectRazor
 
       # execute a select statement that values from a given table
       #
-      # @param conn [PG::Connection]
-      # @param statment_name Name of previously prepared select
+      # @param statement_name Name of previously prepared select
       # @param params [Array] Parameters used when executing the select
       # @return [Array] Array of hashes
       #
@@ -282,9 +292,9 @@ module ProjectRazor
       # Prepare a statement that will do some DML on a table used for storing collection entries. If
       # it's discovered that this table doesn't exist, then it will be created
       #
-      # @statement_name Name to give the statement
-      # @collection_name Name of the collection that the statement is for
-      # @statement The SQL for the statement
+      # @param statement_name Name to give the statement
+      # @param collection_name Name of the collection that the statement is for
+      # @param statement The SQL for the statement
       #
       def prepare_on_collection(statement_name, collection_name, statement)
         if is_db_selected?
@@ -343,7 +353,7 @@ module ProjectRazor
       # transform an UUID from base62 encoded form to the expanded
       # XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX form
       #
-      # @param uuid to transform
+      # @param base62_encoded_uuid to transform
       # @return expanded UUID
       #
       def unpack_uuid(base62_encoded_uuid)
