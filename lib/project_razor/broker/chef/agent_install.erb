@@ -13,7 +13,7 @@ function install_chef() {
 
 log_level        :info
 log_location     STDOUT
-chef_server_url  'http://0.0.0.0:4000'
+chef_server_url  'http://<%= @options[:server] %>:4000'
 validation_client_name 'chef-validator' 
 EOFCHEFCLIENT
 
@@ -24,7 +24,7 @@ cat >/etc/chef/validation.pem <<EOFCHEFVALIDATION
 EOFCHEFVALIDATION
 
 gem install ohai
-chef-client -S http://0.0.0.0:4000
+chef-client -S chef_server_url
 
 }
 
