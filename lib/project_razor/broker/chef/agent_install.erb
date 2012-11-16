@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -u
+set -e
+
+function install_chef() {
+  
+    mkdir -p /etc/chef
+
+    curl -L https://www.opscode.com/chef/install.sh | bash
+    
+    cat >/etc/chef/client.rb <<EOFCHEFCLIENT
+
+log_level        :info
+log_location     STDOUT
+chef_server_url  'http://0.0.0.0:4000'
+validation_client_name 'chef-validator' 
+EOFCHEFCLIENT
+
+cat >/etc/chef/validation.pem <<EOFCHEFVALIDATION
+-----BEGIN RSA PRIVATE KEY-----
+<your chef server key here>
+-----END RSA PRIVATE KEY-----
+EOFCHEFVALIDATION
+
+gem install ohai
+chef-client -S http://0.0.0.0:4000
+
+}
+
+function provision_chef() {
+    install_chef
+    echo Chef Success!
+ 
+    exit 0
+}
+
+
+provision_chef
