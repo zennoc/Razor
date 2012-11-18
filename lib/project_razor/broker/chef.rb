@@ -51,7 +51,7 @@ module ProjectRazor::BrokerPlugin
       # set to wait
       ret = :broker_wait if @run_script_str.include?("Exiting; no certificate found and waitforcert is disabled")
       # set to success (this meant autosign was likely on)
-      ret = :broker_success if @run_script_str.include?("Finished catalog run")
+      ret = :broker_success if @run_script_str.include?("Report handlers compelete")
       ret
     end
 

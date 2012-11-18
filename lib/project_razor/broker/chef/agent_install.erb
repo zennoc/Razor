@@ -24,7 +24,7 @@ cat >/etc/chef/validation.pem <<EOFCHEFVALIDATION
 EOFCHEFVALIDATION
 
 gem install ohai
-chef-client -S chef_server_url
+chef-client -S 'http://<%= @options[:server] %>:4000'
 
 }
 
