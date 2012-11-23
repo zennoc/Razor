@@ -18,11 +18,31 @@ module ProjectRazor::BrokerPlugin
       @description = "PuppetLabs PuppetMaster"
       @hidden = false
       from_hash(hash) if hash
+      # backwards compat with old @servers array
+      if !@server && defined?(@servers) && !@servers.empty?
+        @server = @servers.first
+      end
+      @req_metadata_hash = {
+        "@server" => {
+          :default      => "",
+          :example      => "puppet.example.com",
+          :validation   => '^[\w.]{3,}$',
+          :required     => true,
+          :description  => "Hostname of the puppet master server"
+        },
+        "@broker_version" => {
+          :default      => "",
+          :example      => "3.0.1",
+          :validation   => '^[0-9]+\.[0-9]+\.[0-9](\.[a-zA-Z0-9\.]+)?$',
+          :required     => false,
+          :description  => "Puppet version (used in gem install)"
+        }
+      }
     end
 
     def agent_hand_off(options = {})
       @options = options
-      @options[:server] = @servers.first
+      @options[:server] = @server
       @options[:ca_server] = @options[:server]
       @options[:version] = @broker_version
       @options[:puppetagent_certname] ||= @options[:uuid].base62_decode.to_s(16)
