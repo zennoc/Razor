@@ -16,7 +16,7 @@ scp_to(hosts('razor-server'), "#{ENV['WORKSPACE']}/pkg/#{pkg}", '/tmp')
 on hosts('razor-server'), "puppet module install --force /tmp/#{pkg}"
 on hosts('razor-server'), "puppet module list --color=false 2>&1"
 on hosts('razor-server'), "puppet module list --color=false 2>&1 | sed -ne '/Missing dependency/ s/^.*'\''\(.*\)'\''.*$/\1/ p'"
-on hosts('razor-server'), "puppet module list --color=false 2>&1 | sed -ne '/Missing dependency/ s/^.*'\''\(.*\)'\''.*$/\1/ p' | xargs -n1 puppet module install"
+on hosts('razor-server'), "puppet module list --color=false 2>&1 | sed -ne '/Missing dependency/ s/^.*'\\''\\(.*\\)'\\''.*$/\\1/ p' | xargs -n1 puppet module install"
 
 step "configure razor"
 on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %q'
