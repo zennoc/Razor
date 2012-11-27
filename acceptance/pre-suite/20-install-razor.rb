@@ -5,7 +5,9 @@ step "install razor modules"
 require 'pathname'
 if (modules = Pathname.glob("#{ENV['WORKSPACE']}/pkg/puppetlabs-razor-*.tar.gz")).size == 1
   pkg = modules[0].basename
+  puts "we found #{pkg} to install"
 else
+  puts "we found NOTHING to install!"
   fail_test "unable to proceed, multiple modules found: #{modules.join(", ")}"
 end
 
