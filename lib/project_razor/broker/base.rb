@@ -101,7 +101,7 @@ module ProjectRazor
             puts "default: " + "#{metadata[:default]}".yellow if metadata[:default] != ""
             puts metadata[:required] ? quit_option : skip_quit_option
             print " > "
-            response = STDIN.gets.strip
+            response = read_input(metadata[:multiline])
             case response
               when "SKIP"
                 if metadata[:required]
@@ -124,6 +124,22 @@ module ProjectRazor
           end
         }
         true
+      end
+
+      def read_input(multiline = false)
+        if multiline
+          response = ""
+          while line = STDIN.gets
+            if line =~ /^$/
+              break
+            else
+              response += line
+            end
+          end
+          response
+        else
+          STDIN.gets.strip
+        end
       end
 
       def map_keys_to_symbols(hash)

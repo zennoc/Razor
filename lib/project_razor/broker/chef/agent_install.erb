@@ -1,39 +1,50 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -u
 set -e
 
-function install_chef() {
-  
-    mkdir -p /etc/chef
-
-    curl -L https://www.opscode.com/chef/install.sh | bash
-    
-    cat >/etc/chef/client.rb <<EOFCHEFCLIENT
-
-log_level        :info
-log_location     STDOUT
-chef_server_url  'http://<%= @options[:server] %>:4000'
-validation_client_name 'chef-validator' 
-EOFCHEFCLIENT
-
-cat >/etc/chef/validation.pem <<EOFCHEFVALIDATION
------BEGIN RSA PRIVATE KEY-----
-<your chef server key here>
------END RSA PRIVATE KEY-----
-EOFCHEFVALIDATION
-
-gem install ohai
-chef-client -S 'http://<%= @options[:server] %>:4000'
-
+exists() {
+  if command -v $1 &>/dev/null
+  then
+    return 0
+  else
+    return 1
+  fi
 }
 
-function provision_chef() {
-    install_chef
-    echo Chef Success!
- 
-    exit 0
-}
+install_sh="<%= install_sh_url %>"
+version_string="-v <%= chef_version %>"
 
+if ! exists /usr/bin/chef-client; then
+  if exists wget; then
+    bash <(wget ${install_sh} -O -) ${version_string}
+  else
+    if exists curl; then
+      bash <(curl -L ${install_sh}) ${version_string}
+    fi
+  fi
+fi
 
-provision_chef
+mkdir -p /etc/chef
+
+(
+cat <<'EOP'
+<%= validation_key %>
+EOP
+) > /tmp/validation.pem
+awk NF /tmp/validation.pem > /etc/chef/validation.pem
+rm /tmp/validation.pem
+chmod 0600 /etc/chef/validation.pem
+
+(
+cat <<'EOP'
+<%= config_content %>
+EOP
+) > /etc/chef/client.rb
+
+(
+cat <<'EOP'
+<%= first_boot.to_json %>
+EOP
+) > /etc/chef/first-boot.json
+
+<%= start_chef %>
