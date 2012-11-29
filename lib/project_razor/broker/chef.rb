@@ -1,6 +1,5 @@
 # Our chef plugin which contains the agent & device proxy classes used for hand off
 
-# TODO - Make broker properties open rather than rigid
 require "erb"
 require "net/ssh"
 
@@ -67,7 +66,7 @@ module ProjectRazor::BrokerPlugin
           :example      => "/usr/local/bin/chef-client",
           :validation   => '^[\w._-]+$',
           :required     => true,
-          :description  => "the alternate path to the chef-client binary."
+          :description  => "an alternate path to the chef-client binary."
         },
         "@base_run_list" => {
           :default      => "",
@@ -90,19 +89,17 @@ module ProjectRazor::BrokerPlugin
       @run_script_str = ""
       begin
         Net::SSH.start(options[:ipaddress], options[:username], { :password => options[:password], :user_known_hosts_file => '/dev/null'} ) do |session|
-          @run_script_str << session.exec!("bash -c '#{@chef_script}' |& tee /tmp/chef_init.log")
+          @run_script_str << session.exec!("bash -c '#{@chef_script}' |& tee /tmp/chef_bootstrap.log")
         end
       rescue => e
-        logger.error "chef agent error: #{e}"
+        logger.error "Chef bootstrap error: #{e}"
         return :broker_fail
       end
 
-      logger.debug "chef bootstrap output:\n---\n#{@run_script_str}\n---"
+      logger.debug "Chef bootstrap output:\n---\n#{@run_script_str}\n---"
 
       # set return to fail by default
       ret = :broker_fail
-      # set to wait
-      ret = :broker_wait if @run_script_str.include?("Exiting; no certificate found and waitforcert is disabled")
       # set to success (this meant autosign was likely on)
       ret = :broker_success if @run_script_str =~ /^#{BROKER_SUCCESS_MSG}$/
       ret
@@ -111,9 +108,9 @@ module ProjectRazor::BrokerPlugin
 
     def compile_template
       logger.debug "Compiling template"
-      install_script = File.join(File.dirname(__FILE__), "chef/agent_install.erb")
+      install_script = File.join(File.dirname(__FILE__), "chef/chef_bootstrap.erb")
       contents = ERB.new(File.read(install_script)).result(binding)
-      logger.debug "chef bootstrap script:\n---\n#{contents}\n---"
+      logger.debug "Chef bootstrap script:\n---\n#{contents}\n---"
       contents
     end
 
