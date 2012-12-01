@@ -22,9 +22,19 @@ describe "ProjectRazor::Slice::Broker" do
       URI("http://127.0.0.1:#{@config.api_port}/#{path.sub(%r{^/}, '')}")
     end
 
+    def http_get(path)
+      response = Net::HTTP.get(razor_uri(path))
+      JSON.parse(response)
+    end
+
+    def http_post(path, hash)
+      uri = razor_uri(path)
+      response = Net::HTTP.post_form(uri, 'json_hash' => JSON.generate(hash))
+      JSON.parse(response.body)
+    end
+
     def create_broker_via_rest(hash)
-      uri = razor_uri("/razor/api/broker/add")
-      Net::HTTP.post_form(uri, 'json_hash' => JSON.generate(hash))
+      http_post("/razor/api/broker/add", hash)
     end
 
     let(:json_hash) do
@@ -41,8 +51,7 @@ describe "ProjectRazor::Slice::Broker" do
 
     [ "/razor/api/broker/plugins", "/razor/api/broker/get/plugins" ].each do |path|
       it "GET #{path} lists all broker plugins" do
-        res = Net::HTTP.get(razor_uri(path))
-        res_hash = JSON.parse(res)
+        res_hash = http_get(path)
         brokers_plugins = res_hash['response']
         brokers_plugins.count.should > 0
         puppet_flag = false # We will just check for the puppet broker plugin
@@ -65,13 +74,9 @@ describe "ProjectRazor::Slice::Broker" do
       end
 
       it "POST /razor/api/broker/add creates a broker target" do
-        uri = razor_uri("/razor/api/broker/add")
-        res = Net::HTTP.post_form(uri, 'json_hash' => JSON.generate(json_hash))
-        res_hash = JSON.parse(res.body)
+        res_hash = http_post("/razor/api/broker/add", json_hash)
         res_hash['result'].should == "Created"
         broker = res_hash['response'].first
-        $broker_uuid_post = broker['@uuid']
-        $broker_uuid_post.should_not == nil
         broker['@name'].should eq("puppet_test")
         broker['@user_description'].should eq("puppet_test_description")
         broker['@server'].should eq("puppet.example.com")
@@ -82,14 +87,13 @@ describe "ProjectRazor::Slice::Broker" do
     context "with one broker target" do
 
       before do
-        res = create_broker_via_rest(json_hash)
-        @broker = JSON.parse(res.body)['response'].first
+        res_hash = create_broker_via_rest(json_hash)
+        @broker = res_hash['response'].first
       end
 
       [ "/razor/api/broker", "/razor/api/broker/get" ].each do |path|
         it "GET #{path} lists all brokers targets" do
-          res = Net::HTTP.get(razor_uri(path))
-          res_hash = JSON.parse(res)
+          res_hash = http_get(path)
           brokers_plugins = res_hash['response']
           brokers_plugins.count.should == 1
           brokers_plugins.first['@uuid'].should eq(@broker['@uuid'])
@@ -99,16 +103,14 @@ describe "ProjectRazor::Slice::Broker" do
       [ "/razor/api/broker", "/razor/api/broker/get" ].each do |path|
         it "GET #{path}/<uuid> finds the specific broker target" do
           broker_uuid = @broker['@uuid']
-          res = Net::HTTP.get(razor_uri("#{path}/#{broker_uuid}"))
-          res_hash = JSON.parse(res)
+          res_hash = http_get("#{path}/#{broker_uuid}")
           broker_response_array = res_hash['response']
           broker_response_array.count.should == 1
           broker_response_array.first['@uuid'].should == broker_uuid
         end
 
         it "GET #{path}?name=regex:<text> finds the broker target by attribute" do
-          res = Net::HTTP.get(razor_uri("#{path}?name=regex:puppet"))
-          res_hash = JSON.parse(res)
+          res_hash = http_get("#{path}?name=regex:puppet")
           res_hash['result'].should == "Ok"
           broker_response_array = res_hash['response']
           broker = broker_response_array.first
@@ -116,8 +118,7 @@ describe "ProjectRazor::Slice::Broker" do
         end
 
         it "GET /#{path}?name=<full_text> finds the broker target by attribute" do
-          res = Net::HTTP.get(razor_uri("#{path}?name=puppet_test"))
-          res_hash = JSON.parse(res)
+          res_hash = http_get("#{path}?name=puppet_test")
           res_hash['result'].should == "Ok"
           broker_response_array = res_hash['response']
           broker = broker_response_array.first
@@ -128,12 +129,10 @@ describe "ProjectRazor::Slice::Broker" do
       it "GET /remove/api/broker/remove/<uuid> deletes specific broker target" do
         broker_uuid = @broker['@uuid']
 
-        res = Net::HTTP.get(razor_uri("/razor/api/broker/remove/#{broker_uuid}"))
-        res_hash = JSON.parse(res)
+        res_hash = http_get("/razor/api/broker/remove/#{broker_uuid}")
         res_hash['result'].should == "Removed"
 
-        res = Net::HTTP.get(razor_uri("/razor/api/broker/#{broker_uuid}"))
-        res_hash = JSON.parse(res)
+        res_hash = http_get("/razor/api/broker/#{broker_uuid}")
         res_hash['errcode'].should_not == 0
       end
 
@@ -144,8 +143,7 @@ describe "ProjectRazor::Slice::Broker" do
         res.class.should == Net::HTTPMethodNotAllowed
         res_hash = JSON.parse(res.body)
 
-        res = Net::HTTP.get(razor_uri("/razor/api/broker"))
-        res_hash = JSON.parse(res)
+        res_hash = http_get("/razor/api/broker")
         brokers_get = res_hash['response']
         brokers_get.count.should == 1
       end
