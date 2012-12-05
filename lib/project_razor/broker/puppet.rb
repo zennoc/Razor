@@ -39,6 +39,22 @@ module ProjectRazor::BrokerPlugin
         }
       }
     end
+    
+    def print_item_header
+      if @is_template
+        return "Plugin", "Description"
+      else
+        return "Name", "Description", "Plugin", "UUID", "Server", "Broker Version"
+      end
+    end
+
+    def print_item
+      if @is_template
+        return @plugin.to_s, @description.to_s
+      else
+        return @name, @user_description, @plugin.to_s, @uuid, @server, @broker_version
+      end
+    end
 
     def agent_hand_off(options = {})
       @options = options
