@@ -2,6 +2,7 @@
 
 require "erb"
 require "net/ssh"
+require 'digest/md5'
 
 # Root namespace for ProjectRazor
 module ProjectRazor::BrokerPlugin
@@ -76,6 +77,24 @@ module ProjectRazor::BrokerPlugin
           :description  => "an optional run_list of common base roles."
         },
       }
+    end
+
+    def print_item_header
+      if @is_template
+        return "Plugin", "Description"
+      else
+        return "Name", "Description", "Plugin", "UUID", "Chef Server URL", "Chef Version", "Validation Key MD5 Hash", 
+                "Validation Client Name", "Bootstrap Environment", "Install Sh Url", "Chef Client Path", "Base Run List"
+      end
+    end
+
+    def print_item
+      if @is_template
+        return @plugin.to_s, @description.to_s
+      else
+        return @name, @user_description, @plugin.to_s, @uuid, @chef_server_url, @chef_version, Digest::MD5.hexdigest(@validation_key),
+               @validation_client_name, @bootstrap_environment, @install_sh_url, @chef_client_path, @base_run_list
+      end
     end
 
     def agent_hand_off(options = {})
