@@ -17,10 +17,11 @@ version_string="-v <%= chef_version %>"
 if ! exists /usr/bin/chef-client; then
   if exists wget; then
     bash <(wget ${install_sh} -O -) ${version_string}
+  elif exists curl; then
+    bash <(curl -L ${install_sh}) ${version_string}
   else
-    if exists curl; then
-      bash <(curl -L ${install_sh}) ${version_string}
-    fi
+    echo ">> wget or curl must be installed, bootstrap failed"
+    exit 1
   fi
 fi
 
