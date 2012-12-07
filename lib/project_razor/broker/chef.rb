@@ -3,6 +3,7 @@
 require "erb"
 require "net/ssh"
 require 'digest/md5'
+require 'uri'
 
 # Root namespace for ProjectRazor
 module ProjectRazor::BrokerPlugin
@@ -22,7 +23,7 @@ module ProjectRazor::BrokerPlugin
         "@chef_server_url" => {
           :default      => "",
           :example      => "https://chef.example.com:4000",
-          :validation   => '^(http|https):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$',
+          :validation   => URI::DEFAULT_PARSER.regexp[:ABS_URI].to_s,
           :required     => true,
           :description  => "the URL for the Chef server."
         },
@@ -58,7 +59,7 @@ module ProjectRazor::BrokerPlugin
         "@install_sh_url" => {
           :default      => "http://opscode.com/chef/install.sh",
           :example      => "http://mirror.example.com/install.sh",
-          :validation   => '^(http|https):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$',
+          :validation   => URI::DEFAULT_PARSER.regexp[:ABS_URI].to_s,
           :required     => true,
           :description  => "the Omnibus installer script URL."
         },
