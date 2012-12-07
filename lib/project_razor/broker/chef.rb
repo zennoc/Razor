@@ -161,12 +161,19 @@ module ProjectRazor::BrokerPlugin
 
     # Constructs a Chef run_list as a concatenation of a base_run_list and
     # any roles/recipes found in razor tags
+    #
+    # Razor tags that are Chef run_list entries will be of the form
+    # "role__web_server" or "recipe__mysql__server", and will be translated
+    # to "role[web_server]" and "recipe[mysql::server]" respectively.
     def run_list
       run_list = Array(base_run_list && base_run_list.split(/\s*,\s*/))
       if @options[:metadata][:razor_tags]
         tag_string = @options[:metadata][:razor_tags]
-        tagged_run_list = tag_string.split(',').select do |tag|
-          tag =~ %r{^(role|recipe)\[[^\]]+\]$}
+        run_list_tags = tag_string.split(',').select do |tag|
+          tag =~ /^(role|recipe)__/
+        end
+        tagged_run_list = run_list_tags.map do |tag|
+          tag.sub(/^(role|recipe)__(.+)$/, '\1[\2]').gsub(/__/, '::')
         end
         run_list += Array(tagged_run_list)
       end
