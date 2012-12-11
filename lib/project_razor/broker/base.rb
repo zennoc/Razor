@@ -112,7 +112,9 @@ module ProjectRazor
               when "QUIT"
                 return false
               when ""
-                if metadata[:default] != ""
+                # if a default value is defined for this parameter (i.e. the metadata[:default]
+                # value is non-nil) then use that value as the value for this parameter
+                if metadata[:default]
                   flag = set_metadata_value(key, metadata[:default], metadata[:validation])
                 else
                   puts "No default value, must enter something".red
