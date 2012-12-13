@@ -76,14 +76,14 @@ module ProjectRazor
           md = (!md.is_a?(Symbol) ? md.gsub(/^@/,'').to_sym : md)
           md_fld_name = '@' + md.to_s
           if provided_metadata[md]
-            raise ProjectRazor::Error::Slice::InvalidModelMetadata, "Invalid Metadata [#{md.to_s}:'#{provided_metadata[md]}']" unless
+            raise ProjectRazor::Error::Slice::InvalidBrokerMetadata, "Invalid Metadata [#{md.to_s}:'#{provided_metadata[md]}']" unless
                 set_metadata_value(md_fld_name, provided_metadata[md], metadata[:validation])
           else
             if metadata[:default] != ""
-              raise ProjectRazor::Error::Slice::MissingModelMetadata, "Missing metadata [#{md.to_s}]" unless
+              raise ProjectRazor::Error::Slice::MissingBrokerMetadata, "Missing metadata [#{md.to_s}]" unless
                   set_metadata_value(md_fld_name, metadata[:default], metadata[:validation])
             else
-              raise ProjectRazor::Error::Slice::MissingModelMetadata, "Missing metadata [#{md.to_s}]" if metadata[:required]
+              raise ProjectRazor::Error::Slice::MissingBrokerMetadata, "Missing metadata [#{md.to_s}]" if metadata[:required]
             end
           end
         end
