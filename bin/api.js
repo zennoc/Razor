@@ -187,7 +187,7 @@ function getArguments(args) {
 }
 
 function getConfig() {
-    execFile(razor_bin, ['-w', 'config', 'read'], function (err, stdout, stderr) {
+    execFile(razor_bin, ['-j', 'config', 'read'], function (err, stdout, stderr) {
         console.log(stdout);
         startServer(stdout);
     });

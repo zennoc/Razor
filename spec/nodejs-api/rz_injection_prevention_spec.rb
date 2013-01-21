@@ -81,10 +81,22 @@ describe "ProjectRazor::NodeJS::API" do
       res.code.should == '404'
     end
 
-    it "should bail on 500 when presented with -x" do
+    it "should bail on 404 when presented with -x" do
       uri = URI "http://127.0.0.1:#{config.api_port}/razor/api/-x"
       res = Net::HTTP.get_response(uri)
-      res.code.should == '500'
+      res.code.should == '404'
+    end
+
+    it "should refuse to deliver the config slice" do
+      uri = URI "http://127.0.0.1:#{config.api_port}/razor/api/config"
+      res = Net::HTTP.get_response(uri)
+      res.code.should == '404'
+    end
+
+    it "should refuse to combine web call with -j option" do
+      uri = URI "http://127.0.0.1:#{config.api_port}/razor/api/-j/config"
+      res = Net::HTTP.get_response(uri)
+      res.code.should == '400'
     end
   end
 end
