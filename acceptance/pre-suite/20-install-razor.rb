@@ -77,3 +77,7 @@ on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %q'
   package { [rake, rspec, mocha, net-ssh]: ensure => installed, provider => gem }
   package { curl: ensure => installed }
 '
+
+# check if we already have the spec files on the machine
+step "copy the spec tests from git to the test host"
+scp_to(hosts('razor-server'), "#{ENV['WORKSPACE']}/spec", '/opt/razor')
