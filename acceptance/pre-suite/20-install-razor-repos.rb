@@ -1,4 +1,4 @@
-test_name "Install Razor using Puppet"
+test_name "Get ready to install Razor using Puppet"
 
 step "install razor modules"
 # Find the package, and ensure we only have one!
@@ -25,22 +25,24 @@ while test -n \"${module}\"; do
     module=\"#{next_missing}\"
 done"
 
-step "configure razor"
-on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %q'
-class { sudo:
-    config_file_replace => false,
+if ENV['INSTALL_MODE'] == 'internal-packages' then
+  step "configure internal package repositories"
+  on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %Q'
+apt::key { "internal-packages":
+  key        => "27D8D6F1",
+  key_source => "http://neptune.puppetlabs.lan/dev/razor/deb/pubkey.gpg",
+  before     => Apt::Source["internal-packages"]
 }
 
-class { razor:
-  username  => razor,
-  mk_source => "https://github.com/downloads/puppetlabs/Razor-Microkernel/rz_mk_prod-image.0.9.0.4.iso",
+apt::source { "internal-packages":
+  location    => "http://neptune.puppetlabs.lan/dev/razor/deb",
+  release     => $lsbdistcodename,
+  repos       => "main",
+  include_src => false
 }
 '
-
-step "validate razor installation"
-on hosts('razor-server'), "/opt/razor/bin/razor_daemon.rb status" do
-  assert_match(/razor_daemon: running/, stdout)
 end
+
 
 step "install gems to run the test suite"
 on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %q'
