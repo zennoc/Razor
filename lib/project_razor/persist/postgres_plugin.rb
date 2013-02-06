@@ -27,14 +27,16 @@ module ProjectRazor
       #
       # @param hostname DNS name or IP-address of host
       # @param port [Integer] Port number to use when connecting to the host
+      # @param username [String] Username that will be used to authenticate to the host
+      # @param password [String] Password that will be used to authenticate to the host
       # @param timeout [Integer] Connection timeout
       # @return [Boolean] Connection status
       #
-      def connect(hostname, port, timeout)
-        logger.debug "Connecting to PostgreSQL (#{hostname}:#{port}) with timeout (#{timeout})"
+      def connect(hostname, port, username, password, timeout)
+        logger.debug "Connecting to PostgreSQL (#{username}@#{hostname}:#{port}) with timeout (#{timeout})"
         dbname = "project_razor"
         begin
-          @connection = PG::Connection.new(:host => hostname, :port => port, :connect_timeout => timeout, :dbname => dbname)
+          @connection = PG::Connection.new(:host => hostname, :port => port, :connect_timeout => timeout, :dbname => dbname, :user => username, :password => password)
         rescue PG::Error => e
           if e.message.include? 'database "' + dbname + '" does not exist'
             @connection = create_database(hostname, port, dbname, timeout)
@@ -175,18 +177,20 @@ module ProjectRazor
       #
       # @param hostname DNS name or IP-address of host
       # @param port [Integer] Port number to use when connecting to the host
+      # @param username [String] Username that will be used to authenticate to the host
+      # @param password [String] Password that will be used to authenticate to the host
       # @param dbname Name of the database
       # @param timeout [Integer] Connection timeout
       # @return [PG::Connection] A connection to the new database
       #
-      def create_database(hostname, port, dbname, timeout)
-        pg_conn = PG::Connection.new(:host => hostname, :port => port, :connect_timeout => timeout, :dbname => "postgres")
+      def create_database(hostname, port, username, password, dbname, timeout)
+        pg_conn = PG::Connection.new(:host => hostname, :port => port, :connect_timeout => timeout, :dbname => "postgres", :user => username, :password => password)
         begin
           pg_conn.exec('CREATE DATABASE ' + dbname)
         ensure
           pg_conn.close
         end
-        PG::Connection.new(:host => hostname, :port => port, :connect_timeout => timeout, :dbname => dbname)
+        PG::Connection.new(:host => hostname, :port => port, :connect_timeout => timeout, :dbname => dbname, :user => username, :password => password)
       end
 
       # If the version is 0, then fetch the record from the table associated with the 'collection_name'. If
