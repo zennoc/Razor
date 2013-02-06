@@ -1,9 +1,13 @@
 // Node.js endpoint for ProjectRazor API
 
-var razor_bin = __dirname+ "/razor -w"; // Set project_razor.rb path
+var razor_bin = __dirname+ "/razor"; // Set project_razor.rb path
 console.log(razor_bin);
-var exec = require("child_process").exec; // create our exec object
+var execFile = require("child_process").execFile; // create our execFile object
 var express = require('express'); // include our express libs
+var common = require('./common.js');
+var InvalidURIPathError = common.InvalidURIPathError;
+var urlDecode = common.urlDecode;
+var returnError = common.returnError;
 
 app = express.createServer(); // our express server
 app.use(express.bodyParser()); // Enable body parsing for POST
@@ -13,92 +17,105 @@ app.use(express.bodyParser()); // Enable body parsing for POST
 // Exception for boot API request
 app.get('/razor/api/boot*',
     function(req, res) {
-        args = req.path.split("/");
-        args.splice(0,3);
-        var args_string = getArguments(args);
-        if (args.length < 2) {
-            args_string = args_string + "default "
+        try {
+            args = getRequestArgs(req);
+            if (args.length < 3)
+                args.push('default');
+            args.push(JSON.stringify(req.query));
+            console.log(razor_bin + getArguments(args));
+            execFile(razor_bin, args, function (err, stdout, stderr) {
+                if(err instanceof Error)
+                    returnError(res, err);
+                else
+                    res.send(stdout, 200, {"Content-Type": "text/plain"});
+            });
+        } catch(e) {
+            returnError(res, e);
         }
-        query_param = "'" + JSON.stringify(req.query) + "'";
-        console.log(razor_bin + args_string + query_param);
-        //process.stdout.write('\033[2J\033[0;0H'); - screen clearing trick
-        exec(razor_bin + args_string + query_param, function (err, stdout, stderr) {
-            res.send(stdout, 200, {"Content-Type": "text/plain"});
-        });
-    });
+   });
 
 app.get('/razor/api/*',
-    // TODO - need to decode vars
-
     function(req, res) {
-        console.log("GET called");
-        args = req.path.split("/");
-        args.splice(0,3);
-        var args_string = getArguments(args);
-        if (args.length < 2) {
-            args_string = args_string + "default "
+        console.log("GET " + req.path);
+        try {
+            args = getRequestArgs(req);
+            if (args.length < 3)
+                args.push('default');
+            	
+            args.push(JSON.stringify(req.query));
+            console.log(razor_bin + getArguments(args));
+            execFile(razor_bin, args, function (err, stdout, stderr) {
+                if(err instanceof Error)
+                    returnError(res, err);
+                else
+                    returnResult(res, stdout);
+            });
+        } catch(e) {
+            returnError(res, e);
         }
-        query_param = "'" + JSON.stringify(req.query) + "'";
-        console.log(razor_bin + args_string + query_param);
-        exec(razor_bin + args_string + query_param, function (err, stdout, stderr) {
-            returnResult(res, stdout);
-        });
     });
-
-
 
 app.post('/razor/api/*',
     function(req, res) {
-        console.log("POST called");
-        args = req.path.split("/");
-        args.splice(0,3);
-        if (command_included(args, "add") == undefined &&
-            command_included(args, "checkin") == undefined &&
-            command_included(args, "register") == undefined) {
-            args.push("add");
+        console.log("POST " + req.path);
+        try {
+            args = getRequestArgs(req);
+            if (!(command_included(args, "add") || command_included(args, "checkin") || command_included(args, "register"))) {
+                args.push("add");
+            }
+            args.push(req.param('json_hash', null));
+            //process.stdout.write('\033[2J\033[0;0H');
+            console.log(razor_bin + getArguments(args));
+            execFile(razor_bin, args, function (err, stdout, stderr) {
+                if(err instanceof Error)
+                    returnError(res, err);
+                else
+                    returnResult(res, stdout);
+            });
+        } catch(e) {
+            returnError(res, e);
         }
-        var json_data = "'" + req.param('json_hash', null) + "'";
-        var args_string = getArguments(args);
-        //process.stdout.write('\033[2J\033[0;0H');
-        console.log(args_string);
-        console.log(razor_bin + args_string + json_data);
-        exec(razor_bin + args_string + json_data, function (err, stdout, stderr) {
-            returnResult(res, stdout);
-        });
     });
 
 app.put('/razor/api/*',
     function(req, res) {
-        console.log("PUT called");
-        args = req.path.split("/");
-        args.splice(0,3);
-        if (command_included(args, "update") == undefined) {
-            args.splice(-1,0,"update");
+        console.log("PUT " + req.path);
+        try {
+            args = getRequestArgs(req);
+            if (!command_included(args, "update")) {
+                args.splice(-1, 0, "update");
+            }
+            args.push(req.param('json_hash', null));
+            console.log(razor_bin + getArguments(args));
+            execFile(razor_bin, args, function (err, stdout, stderr) {
+                if(err instanceof Error)
+                    returnError(res, err);
+                else
+                    returnResult(res, stdout);
+            });
+        } catch(msg) {
+            returnError(res, e);
         }
-        var json_data = "'" + req.param('json_hash', null) + "'";
-        var args_string = getArguments(args);
-        console.log(args_string);
-        console.log(razor_bin + args_string + json_data);
-        exec(razor_bin + args_string + json_data, function (err, stdout, stderr) {
-            returnResult(res, stdout);
-        });
     });
 
 app.delete('/razor/api/*',
     function(req, res) {
-        console.log("DELETE called");
-        args = req.path.split("/");
-        args.splice(0,3);
-        if (command_included(args, "remove") == undefined) {
-            args.splice(-1,0,"remove");
+        console.log("DELETE " + req.path);
+        try {
+            args = getRequestArgs(req);
+            if (!command_included(args, "remove")) {
+                args.splice(-1, 0, "remove");
+            }
+            console.log(razor_bin + getArguments(args));
+            execFile(razor_bin, args, function (err, stdout, stderr) {
+                if(err instanceof Error)
+                    returnError(res, err);
+                else
+                    returnResult(res, stdout);
+            });
+        } catch(msg) {
+            returnError(res, e);
         }
-        var json_data = '{}';
-        var args_string = getArguments(args);
-        console.log(args_string);
-        console.log(razor_bin + args_string);
-        exec(razor_bin + args_string, function (err, stdout, stderr) {
-            returnResult(res, stdout);
-        });
     });
 
 
@@ -106,19 +123,40 @@ app.get('/*',
     function(req, res) {
         switch(req.path)
         {
-            case "/":
-                res.send('404 Error: Bad Request', 404);
-                break;
             case "/razor":
-                res.send('404 Error: Bad Request(No module selected)', 404);
+                res.send('Bad Request(No module selected)', 404);
                 break;
             case "/razor/api":
-                res.send('404 Error: Bad Request(No slice selected)', 404);
+                res.send('Bad Request(No slice selected)', 404);
                 break;
             default:
-                res.send('404 Error: Bad Request', 404);
+                res.send('Bad Request', 404);
         }
     });
+
+/**
+ * Assembles an array of argument, starting with the string '-w' and then
+ * followed by URI decoded path elements from the request path. The first
+ * two path elements are skipped.
+ *
+ * @param req The Express Request object
+ * @returns An array of arguments
+ * @throws An 'Illegal path component' if some path element is considered unsafe
+ */
+function getRequestArgs(req) {
+    args = req.path.split("/");
+    args.splice(0,3);
+    if(args.length > 0) {
+        if(args[args.length-1] == '')
+            // Path ended with slash. Just skip this one
+            args.pop();
+    
+        for(var i = 0; i < args.length; ++i)
+            args[i] = urlDecode(args[i]);
+    }
+    args.unshift('-w');
+    return args;
+}
 
 function returnResult(res, json_string) {
     var return_obj;
@@ -132,30 +170,31 @@ function returnResult(res, json_string) {
     }
     catch(err)
     {
-        // Parsing Error | Razor sent us something wrong - we just assume output
-        res.send(json_string, 200, {"Content-Type": "application/json"});
+    	// Apparently not JSON and should be sent as plain text.
+    	// TODO: This approach is bad. We should know what to do with
+    	// the json_string, not guess. What if the response can be parsed but
+    	// still isn't JSON?
+        res.send(json_string, 200, {'Content-Type': 'text/plain'});
     }
 }
 
 function getArguments(args) {
     var arg_string = " ";
     for (x = 0; x < args.length; x++) {
-        arg_string = arg_string + args[x] + " "
+        arg_string = arg_string + "'" + args[x] + "' "
     }
     return arg_string;
 }
 
 function getConfig() {
-    exec(razor_bin + " config read", function (err, stdout, stderr) {
+    execFile(razor_bin, ['-j', 'config', 'read'], function (err, stdout, stderr) {
         console.log(stdout);
         startServer(stdout);
     });
 }
 
 function command_included(arr, obj) {
-    for(var i=0; i<arr.length; i++) {
-        if (arr[i] == obj) return true;
-    }
+    return arr.indexOf(obj) >= 0;
 }
 
 // TODO Add catch for if project_razor.js is already running on port
@@ -172,4 +211,3 @@ function startServer(json_config) {
 
 
 getConfig();
-
