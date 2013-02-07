@@ -83,5 +83,5 @@ rm -rf %{buildroot}
 %{_initrddir}/puppet-razor
 
 %changelog
-* <%= Time.now.strftime("%a %b %d %Y") %> Puppet Labs Release <info@puppetlabs.com> -  1:<%= @rpmversion %>-<%= @rpmrelease %>
+* <%= Time.now.strftime("%a %b %d %Y") %> Puppet Labs Release <info@puppetlabs.com> -  <%= @rpmversion %>-<%= @rpmrelease %>
 - Build for <%= @version %>
