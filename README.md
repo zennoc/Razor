@@ -75,7 +75,7 @@ into any errors or omissions in that list.
 * The Razor MicroKernel project:
 [https://github.com/puppetlabs/Razor-Microkernel](https://github.com/puppetlabs/Razor-Microkernel)
 * The Razor MK images are officially available at:
-[https://github.com/puppetlabs/Razor-Microkernel/downloads](https://github.com/puppetlabs/Razor-Microkernel/downloads)
+[https://downloads.puppetlabs.com/razor/](https://downloads.puppetlabs.com/razor/)
 
 ## Environment Variables
 * $RAZOR\_HOME: Razor installation root directory.
