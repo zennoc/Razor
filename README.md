@@ -1,6 +1,6 @@
 # Project Razor
 
-[![Build Status](https://jenkins.puppetlabs.com/job/razor-acceptance-matrix/badge)
+[![Build Status](https://jenkins.puppetlabs.com/job/razor-acceptance-matrix/badge/icon)
 
 ## Introduction
 
