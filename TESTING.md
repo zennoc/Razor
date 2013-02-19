@@ -12,7 +12,8 @@ You can run the rspec suite - it is acceptance level - though:
 3. Install the required node modules.  (See [the Puppet module for details](https://github.com/puppetlabs/puppetlabs-razor/blob/master/manifests/nodejs.pp))
 4. Install the required gems.  (See [the Puppet module for details, again](https://github.com/puppetlabs/puppetlabs-razor/blob/master/manifests/ruby.pp))
 5. Make sure you don't care about your data!  This will **DESTROY** the Razor database!
-6. Run `rspec spec`
+6. Start razor with `/opt/razor/bin/razor_daemons.rb start`
+7. Run `rspec spec`
 
 If you want to use our acceptance suite, which saves you destroying your local
 data, you are welcome to.  It is not totally trivial to get working, but
