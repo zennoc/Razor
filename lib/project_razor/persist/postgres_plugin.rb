@@ -88,6 +88,7 @@ module ProjectRazor
       # @return [Hash] or nil if the object cannot be found
       #
       def object_doc_get_by_uuid(object_doc, collection_name)
+        uuid = object_doc['@uuid']
         statement_name = "one:#{collection_name}"
         if @statements.add?(statement_name)
           prepare_on_collection(statement_name, collection_name, 'SELECT value::varchar FROM ' + table_for_collection(collection_name) + ' WHERE id = $1::uuid')
