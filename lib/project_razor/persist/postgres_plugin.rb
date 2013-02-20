@@ -207,13 +207,15 @@ module ProjectRazor
       # @return The updated document (with new version)
       #
       def insert_or_update(conn, object_doc, collection_name)
-        if object_doc['@version'] == 0
+        encoded_object_doc = Utility.encode_symbols_in_hash(object_doc)
+
+        if encoded_object_doc['@version'] == 0
           # obtain the version if possible
-          version = table_fetch_version(conn, object_doc['@uuid'], collection_name)
-          return table_insert(conn, object_doc, collection_name) if version === nil
-          object_doc['@version'] = version
+          version = table_fetch_version(conn, encoded_object_doc['@uuid'], collection_name)
+          return table_insert(conn, encoded_object_doc, collection_name) if version === nil
+          encoded_object_doc['@version'] = version
         end
-        table_update(conn, object_doc, collection_name)
+        table_update(conn, encoded_object_doc, collection_name)
       end
 
       # Fetch the current version for the given 'uuid' from the collection named 'collection_name'
@@ -290,7 +292,7 @@ module ProjectRazor
       #
       def exec_select_on_collection(statement_name, params)
         @connection.exec_prepared(statement_name, params, 0).collect do
-          | row | JSON.parse!(row['value'])
+          | row | Utility.decode_symbols_in_hash(JSON.parse!(row['value']))
         end
       end
 
