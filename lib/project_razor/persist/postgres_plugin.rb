@@ -91,7 +91,7 @@ module ProjectRazor
         uuid = object_doc['@uuid']
         statement_name = "one:#{collection_name}"
         if @statements.add?(statement_name)
-          prepare_on_collection(statement_name, collection_name, 'SELECT value::varchar FROM ' + table_for_collection(collection_name) + ' WHERE id = $1::uuid')
+          prepare_on_collection(statement_name, collection_name, 'SELECT value::varchar FROM ' + table_for_collection(collection_name) + ' WHERE id = $1::' + id_type_for(collection_name).downcase)
         end
         hits = exec_select_on_collection(statement_name, [unpack_uuid(uuid)])
         return hits.count == 0 ? nil : hits[0]
@@ -140,7 +140,7 @@ module ProjectRazor
       def object_doc_remove(object_doc, collection_name)
         statement_name = "delete:#{collection_name}"
         if @statements.add?(statement_name)
-          prepare_on_collection(statement_name, collection_name, 'DELETE FROM ' + table_for_collection(collection_name) + ' WHERE id = $1::uuid')
+          prepare_on_collection(statement_name, collection_name, 'DELETE FROM ' + table_for_collection(collection_name) + ' WHERE id = $1::' + id_type_for(collection_name))
         end
         result = nil
         transaction {|conn| result = conn.exec_prepared(statement_name, [unpack_uuid(object_doc['@uuid'])])}
@@ -309,7 +309,7 @@ module ProjectRazor
             return @connection.prepare(statement_name, statement)
           rescue PG::Error => e
             if sqlstate(e) == SQLSTATE_NO_SUCH_TABLE
-              @connection.exec('CREATE TABLE ' + table_for_collection(collection_name) + '(id UUID PRIMARY KEY NOT NULL, version INTEGER NOT NULL, value VARCHAR NOT NULL)')
+              @connection.exec('CREATE TABLE ' + table_for_collection(collection_name) + "(id #{id_type_for(collection_name)} PRIMARY KEY NOT NULL, version INTEGER NOT NULL, value VARCHAR NOT NULL)")
               return @connection.prepare(statement_name, statement)
             else
               raise e
@@ -329,6 +329,8 @@ module ProjectRazor
       # @return base62 encoded UUID
       #
       def pack_uuid(uuid)
+        return uuid if uuid == "policy_table"
+
         compressed = uuid.gsub!(/^(\h{8})-?(\h{4})-?(\h{4})-?(\h{4})-?(\h{12})$/, '\1\2\3\4\5')
         if compressed === nil
           raise ArgumentError.new('Not a valid UUID: "' + uuid + '"')
@@ -343,16 +345,17 @@ module ProjectRazor
       #
       def ensure_prepared_update_statements(collection_name)
         statement_name = "version:#{collection_name}"
+        id_type = id_type_for(collection_name).downcase
         if @statements.add?(statement_name)
-          prepare_on_collection(statement_name, collection_name, 'SELECT version::int FROM ' + table_for_collection(collection_name) + ' WHERE id = $1::uuid')
+          prepare_on_collection(statement_name, collection_name, 'SELECT version::int FROM ' + table_for_collection(collection_name) + ' WHERE id = $1::' + id_type)
         end
         statement_name = "update:#{collection_name}"
         if @statements.add?(statement_name)
-          prepare_on_collection(statement_name, collection_name, 'UPDATE ' + table_for_collection(collection_name) + ' SET version = version + 1, value = $3::varchar WHERE id = $1::uuid AND version = $2::int')
+          prepare_on_collection(statement_name, collection_name, 'UPDATE ' + table_for_collection(collection_name) + ' SET version = version + 1, value = $3::varchar WHERE id = $1::' + id_type + ' AND version = $2::int')
         end
         statement_name = "insert:#{collection_name}"
         if @statements.add?(statement_name)
-          prepare_on_collection(statement_name, collection_name, 'INSERT INTO ' + table_for_collection(collection_name) + ' (id, version, value) VALUES ($1::uuid, 1, $2::varchar)')
+          prepare_on_collection(statement_name, collection_name, 'INSERT INTO ' + table_for_collection(collection_name) + ' (id, version, value) VALUES ($1::' + id_type + ', 1, $2::varchar)')
         end
         nil
       end
@@ -364,6 +367,8 @@ module ProjectRazor
       # @return expanded UUID
       #
       def unpack_uuid(base62_encoded_uuid)
+        return base62_encoded_uuid if base62_encoded_uuid == "policy_table"
+
         hex = base62_encoded_uuid.base62_decode().to_s(16).rjust(32,'0')
         hex[0,8] + '-' + hex[8,4] + '-' + hex[12,4] + '-' + hex[16,4] + '-' + hex[20,12]
       end
@@ -383,6 +388,10 @@ module ProjectRazor
           raise "DB appears to be down"
         end
         nil
+      end
+
+      def id_type_for(collection_name)
+        collection_name == :policy_table ? "VARCHAR" : "UUID"
       end
     end
   end
