@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'project_razor'
 
 describe Object, "extensions" do
   context ".class_children" do
