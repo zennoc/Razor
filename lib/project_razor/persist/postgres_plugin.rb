@@ -209,7 +209,7 @@ module ProjectRazor
       def insert_or_update(conn, object_doc, collection_name)
         encoded_object_doc = Utility.encode_symbols_in_hash(object_doc)
 
-        if encoded_object_doc['@version'] == 0
+        if encoded_object_doc['@version'] == 0 || collection_name == :active
           # obtain the version if possible
           version = table_fetch_version(conn, encoded_object_doc['@uuid'], collection_name)
           return table_insert(conn, encoded_object_doc, collection_name) if version === nil
