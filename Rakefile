@@ -25,7 +25,7 @@ if defined?(RSpec::Core::RakeTask)
   task :specsdb => [:specdb]
 
   desc "Run all rspec Persistence tests"
-  RSpec::Core::RakeTask.new(:specdb) do |t| 
+  RSpec::Core::RakeTask.new(:specdb) do |t|
     t.rspec_opts = ['--color']
     # ignores fixtures directory.
     t.pattern = 'spec/persist/*_spec.rb'
