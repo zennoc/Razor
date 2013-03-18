@@ -4,7 +4,7 @@ require "project_razor/power_control/ipmi_controller"
 require "rspec"
 require "net/http"
 require "net/http"
-require "mocha"
+require "mocha/api"
 require "yaml"
 
 describe ProjectRazor::PowerControl::IpmiController do
