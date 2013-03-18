@@ -14,7 +14,7 @@ describe "ProjectRazor::Slice::Tag" do
     before(:all) do
       @data = ProjectRazor::Data.instance
       @data.check_init
-      @config = @data.config
+      @config = ProjectRazor.config
       @data.delete_all_objects(:tag)
       @data.delete_all_objects(:node)
       @uuid = "TEST#{rand(9)}#{rand(9)}#{rand(9)}#{rand(9)}#{rand(9)}#{rand(9)}#{rand(9)}"
