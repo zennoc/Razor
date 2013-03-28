@@ -56,22 +56,6 @@ module ProjectRazor
       end
     end
 
-    # Returns a true|false on whether the object type is valid
-    # requires that the instance variables for the object have @type & @hidden
-    # @param [String] namespace_prefix
-    # @param [String] type_name
-    # @return [true|false]
-    def is_valid_type?(namespace_prefix, template_name = "default")
-      get_child_types(namespace_prefix).each do
-        |template|
-        return true if template.template.to_s.strip == template_name.strip && !template.hidden
-      end
-      false
-    end
-
-
-    alias :is_valid_template? :is_valid_type?
-
     def new_object_from_template_name(namespace_prefix, object_template_name)
       get_child_types(namespace_prefix).each do
       |template|
