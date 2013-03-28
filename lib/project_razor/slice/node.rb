@@ -112,13 +112,18 @@ module ProjectRazor
         # Grab next arg as json string var
         json_string = @command_array.first
         # Validate JSON, if valid we treat like a POST VAR request. Otherwise it passes on to CLI which handles GET like CLI
-        if is_valid_json?(json_string)
+        begin
           # Grab vars as hash using sanitize to strip the @ prefix if used
           @vars_hash = sanitize_hash(JSON.parse(json_string))
           @vars_hash['hw_id'] = @vars_hash['uuid'] if @vars_hash['uuid']
           @hw_id = @vars_hash['hw_id']
           @last_state = @vars_hash['last_state']
           @attributes_hash = @vars_hash['attributes_hash']
+        rescue Exception
+          # @todo danielp 2013-03-27: the original code simply ignored invalid
+          # JSON in this field, and carried on.  Here we do the same, even
+          # though that puts a somewhat bad taste in my mouth.  (Yes, even to
+          # the level of capturing the parent of all exceptions here.)
         end
         #end
         #@hw_id, @last_state, @attributes_hash = *@command_array unless @hw_id || @last_state || @attributes_hash
@@ -154,13 +159,18 @@ module ProjectRazor
         # Grab next arg as json string var
         json_string = @command_array.first
         # Validate JSON, if valid we treat like a POST VAR request. Otherwise it passes on to CLI which handles GET like CLI
-        if is_valid_json?(json_string)
+        begin
           # Grab vars as hash using sanitize to strip the @ prefix if used
           @vars_hash = sanitize_hash(JSON.parse(json_string))
           @vars_hash['hw_id'] = @vars_hash['uuid'] if @vars_hash['uuid']
           @hw_id = @vars_hash['hw_id']
           @last_state = @vars_hash['last_state']
           @first_checkin = @vars_hash['first_checkin']
+        rescue Exception
+          # @todo danielp 2013-03-27: the original code simply ignored invalid
+          # JSON in this field, and carried on.  Here we do the same, even
+          # though that puts a somewhat bad taste in my mouth.  (Yes, even to
+          # the level of capturing the parent of all exceptions here.)
         end
         #end
         #@hw_id, @last_state, @first_checkin = *@command_array unless @hw_id || @last_state || @first_checkin

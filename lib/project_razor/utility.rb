@@ -67,15 +67,6 @@ module ProjectRazor
     alias :new_object_from_type_name :new_object_from_template_name
 
 
-    def is_valid_json?(json_string)
-      begin
-        JSON.parse(json_string)
-        return true
-      rescue Exception => e
-        return false
-      end
-    end
-
     def sanitize_hash(in_hash)
       new_hash = {}
       in_hash.each_key do
