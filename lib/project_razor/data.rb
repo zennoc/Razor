@@ -39,10 +39,9 @@ module ProjectRazor
     # @return [Array]
     def fetch_all_objects(object_symbol)
       logger.debug "Fetching all objects (#{object_symbol})"
-      object_array = []
-      object_hash_array = persist_ctrl.object_hash_get_all(object_symbol)
-      object_hash_array.each { |object_hash| object_array << object_hash_to_object(object_hash) }
-      object_array
+      persist_ctrl.object_hash_get_all(object_symbol).map do |object_hash|
+        object_hash_to_object(object_hash)
+      end
     end
 
     # Fetches a document from database with a specific 'uuid', converts to an object, and returns it
@@ -67,12 +66,8 @@ module ProjectRazor
     # @return [Object, nil]
     def fetch_object_by_uuid_pattern(object_symbol, object_uuid_pattern)
       logger.debug "Fetching object by pattern  (#{object_uuid_pattern}) in collection (#{object_symbol})"
-      found_objects = []
-      fetch_all_objects(object_symbol).each do
-      |object|
-        scan_array = object.uuid.scan(object_uuid_pattern)
-        found_objects << object if scan_array.count > 0
-        #return object if object.uuid == object_uuid
+      found_objects = fetch_all_objects(object_symbol).select do |object|
+        object.uuid.include?(object_uuid_pattern)
       end
       if found_objects.count == 1
         found_objects.first
@@ -89,12 +84,9 @@ module ProjectRazor
     # @return [Object, nil]
     def fetch_objects_by_filter(object_symbol, object_filter)
       logger.debug "Fetching objects by filter (#{object_filter}) in collection (#{object_symbol})"
-      object_array = []
-      fetch_all_objects(object_symbol).each do
-      |object|
-        object_array << object if check_filter_vs_hash(object_filter, object.to_hash)
+      fetch_all_objects(object_symbol).select do |object|
+        check_filter_vs_hash(object_filter, object.to_hash)
       end
-      object_array
     end
 
     # Takes an {ProjectRazor::Object} and creates/persists it within the database.
@@ -108,9 +100,7 @@ module ProjectRazor
         unless options[:multi_collection]
           raise ProjectRazor::Error::MissingMultiCollectionOnGroupPersist, "Missing namespace on multiple object  persist"
         end
-        hash_array = []
-        object.each {|o| hash_array << o.to_hash}
-        persist_ctrl.object_hash_update_multi(hash_array, options[:multi_collection])
+        persist_ctrl.object_hash_update_multi(object.map {|o| o.to_hash }, options[:multi_collection])
         object.each {|o| o._persist_ctrl = persist_ctrl && (o.refresh_self if options[:refresh])}
         object.each {|o| o.refresh_self} if options[:refresh]
       else
