@@ -68,12 +68,7 @@ module ProjectRazor
 
 
     def sanitize_hash(in_hash)
-      new_hash = {}
-      in_hash.each_key do
-      |k|
-        new_hash[k.sub(/^@/,"")] = in_hash[k]
-      end
-      new_hash
+      in_hash.inject({}) {|h, (k, v)| h[k.sub(/^@/, '')] = v; h }
     end
 
     def self.encode_symbols_in_hash(obj)
