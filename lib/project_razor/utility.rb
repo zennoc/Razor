@@ -35,22 +35,6 @@ module ProjectRazor
       hash
     end
 
-    # Iterates and converts BSON:OrderedHash back to vanilla hash / MongoDB specific
-    # @param bson_hash [Hash]
-    # @return [Hash]
-    def bson_to_hash(bson_hash)
-      new_hash = {}
-      bson_hash.each_key do
-      |k|
-        if bson_hash[k].class == BSON::OrderedHash
-          new_hash[k] = bson_to_hash(bson_hash[k])
-        else
-          new_hash[k] = bson_hash[k]
-        end
-      end
-      new_hash
-    end
-
     # Sets instance variables
     # will not include any that start with "_" (Mongo specific)
     # @param [Hash] hash
