@@ -658,15 +658,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
     return return_vals
   end
 
-  # returns the next argument from the @command_array (ensuring that the @last_arg and @prev_args
-  # instance variables are kept consistent as it does so)
-  def get_next_arg
-    return_val = @command_array.shift
-    @last_arg  = return_val
-    @prev_args.push(return_val)
-    return_val
-  end
-
   def print_object_array(object_array, title = nil, options = { })
     # This is for backwards compatibility
     title = options[:title] unless title
