@@ -7,7 +7,7 @@ require 'require_all'
 class ProjectRazor::Slice < ProjectRazor::Object
   include ProjectRazor::Logging
 
-  attr_accessor :slice_name, :slice_commands, :web_command, :hidden
+  attr_accessor :slice_commands, :web_command, :hidden
   attr_accessor :verbose
   attr_accessor :debug
 
