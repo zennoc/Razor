@@ -681,7 +681,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
             obj_web = Hash[obj_web.reject { |k, v| !%w(@uuid @classname, @noun).include?(k) }] unless object_array.count == 1
 
             add_uri_to_object_hash(obj_web)
-            iterate_obj(obj_web)
             obj_web
           end
         end
@@ -732,22 +731,20 @@ class ProjectRazor::Slice < ProjectRazor::Object
     end
   end
 
-  def iterate_obj(obj_hash)
-    obj_hash.each do |k, v|
-      if obj_hash[k].class == Array
-        obj_hash[k].each do |item|
+  def add_uri_to_object_hash(object_hash)
+    noun = object_hash["@noun"]
+    object_hash["@uri"] = "#@uri_root#{noun}/#{object_hash["@uuid"]}" if noun
+
+    object_hash.each do |k, v|
+      if object_hash[k].class == Array
+        object_hash[k].each do |item|
           if item.class == Hash
             add_uri_to_object_hash(item)
           end
         end
       end
     end
-    obj_hash
-  end
 
-  def add_uri_to_object_hash(object_hash)
-    noun = object_hash["@noun"]
-    object_hash["@uri"] = "#@uri_root#{noun}/#{object_hash["@uuid"]}" if noun
     object_hash
   end
 
