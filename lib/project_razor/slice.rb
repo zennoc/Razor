@@ -7,8 +7,7 @@ require 'require_all'
 class ProjectRazor::Slice < ProjectRazor::Object
   include ProjectRazor::Logging
 
-  # Bool for indicating whether this was driven from Node.js
-  attr_accessor :command_array, :slice_name, :slice_commands, :web_command, :hidden
+  attr_accessor :slice_name, :slice_commands, :web_command, :hidden
   attr_accessor :verbose
   attr_accessor :debug
 
@@ -299,13 +298,8 @@ class ProjectRazor::Slice < ProjectRazor::Object
     end
   end
 
-  # This allows stubbing
-  def command_array
-    @command_array
-  end
-
   def get_cli_vars(vars_array)
-    vars_hash = Hash[command_array.collect { |x| x.split("=") }]
+    vars_hash = Hash[@command_array.collect { |x| x.split("=") }]
     vars_array.collect { |k| vars_hash[k] if vars_hash.has_key? k }
   end
 
