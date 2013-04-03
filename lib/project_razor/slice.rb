@@ -18,7 +18,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
     @command_help_text = ""
     @slice_commands = {}
     @web_command = false
-    @last_arg = nil
     @prev_args = Stack.new
     @hidden = true
     @helper_message_objects = nil
@@ -62,8 +61,7 @@ class ProjectRazor::Slice < ProjectRazor::Object
           (k.instance_of? String and @command_array.first.to_s == k.to_s) or
           (k.instance_of? Regexp and @command_array.first =~ k) or
           (k.instance_of? Array and eval_command_array(k))
-        @last_arg =  @command_array.shift
-        @prev_args.push(@last_arg)
+        @prev_args.push(@command_array.shift)
         return eval_action(@command_hash[k])
       else
       end
