@@ -463,13 +463,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
     "failed to parse slice command: '#{command_str}'; check usage"
   end
 
-  # used by the slices to throw an error when an unexpected UUID was found
-  # while parsing the command line
-  def throw_uuid_not_allowed_error
-    raise ProjectRazor::Error::Slice::SliceCommandParsingFailed,
-    "Unexpected UUID argument found; a UUID value is not allowed in this command"
-  end
-
   # used by the slices to throw an error when a UUID was expected in a slice command
   # but no UUID value was found
   def throw_missing_uuid_error
