@@ -286,14 +286,9 @@ class ProjectRazor::Slice < ProjectRazor::Object
 
   end
 
-  # This allows stubbing
-  def command_shift
-    @command_array.shift
-  end
-
   def get_web_vars(vars_array)
     begin
-      vars_hash = sanitize_hash(JSON.parse(command_shift))
+      vars_hash = sanitize_hash(JSON.parse(@command_array.shift))
       vars_array.collect { |k| vars_hash[k] if vars_hash.has_key? k }
     rescue JSON::ParserError
       # TODO: Determine if logging appropriate
@@ -334,7 +329,7 @@ class ProjectRazor::Slice < ProjectRazor::Object
 
   def get_options_web
     begin
-      return Hash[sanitize_hash(JSON.parse(command_shift)).map { |(k, v)| [k.to_sym, v] }]
+      return Hash[sanitize_hash(JSON.parse(@command_array.shift)).map { |(k, v)| [k.to_sym, v] }]
     rescue JSON::ParserError => e
       # TODO: Determine if logging appropriate
       puts e.message
