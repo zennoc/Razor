@@ -78,7 +78,7 @@ module ProjectRazor
             # underscore character and swap the order when printing the command usage
             option_items = load_option_items(:command => command.to_sym)
             command, subcommand = command.split("_")
-            print_command_help(slice_name.downcase, command, option_items, subcommand)
+            print_command_help(command, option_items, subcommand)
             return
           rescue
           end

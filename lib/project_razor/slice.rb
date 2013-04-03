@@ -362,16 +362,16 @@ class ProjectRazor::Slice < ProjectRazor::Object
   end
 
   # used by the slices to print out detailed usage for individual commands
-  def print_command_help(slice_name, command, option_items, contained_resource = nil)
+  def print_command_help(command, option_items, contained_resource = nil)
     banner = ""
     if contained_resource
       banner = ( option_items.select { |elem| elem[:uuid_is] == "required" }.length > 0 ?
-        "razor #{slice_name} (#{slice_name.upcase}_UUID) #{contained_resource} #{command} (UUID) (options...)" :
-        "razor #{slice_name} (#{slice_name.upcase}_UUID) #{contained_resource} #{command} (options...)")
+        "razor #{slice_name.downcase} (#{slice_name.upcase}_UUID) #{contained_resource} #{command} (UUID) (options...)" :
+        "razor #{slice_name.downcase} (#{slice_name.upcase}_UUID) #{contained_resource} #{command} (options...)")
     else
       banner = ( option_items.select { |elem| elem[:uuid_is] == "required" }.length > 0 ?
-        "razor #{slice_name} #{command} (UUID) (options...)" :
-        "razor #{slice_name} #{command} (options...)")
+        "razor #{slice_name.downcase} #{command} (UUID) (options...)" :
+        "razor #{slice_name.downcase} #{command} (options...)")
     end
     usage_lines = get_options({}, :options_items => option_items,
       :banner => banner).to_s.split("\n")

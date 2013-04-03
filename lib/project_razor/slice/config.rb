@@ -8,7 +8,7 @@ module ProjectRazor
     # Used for all boot logic by node
     class Config < ProjectRazor::Slice
       include(ProjectRazor::Logging)
-      # Initializes ProjectRazor::Slice::Model including #slice_commands, #slice_commands_help, & #slice_name
+      # Initializes ProjectRazor::Slice::Model including #slice_commands, #slice_commands_help
       # @param [Array] args
       def initialize(args)
         super(args)

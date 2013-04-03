@@ -27,7 +27,7 @@ module ProjectRazor
           begin
             # load the option items for this command (if they exist) and print them
             option_items = load_option_items(:command => command.to_sym)
-            print_command_help(slice_name.downcase, command, option_items)
+            print_command_help(command, option_items)
             return
           rescue
           end

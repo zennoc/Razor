@@ -17,7 +17,7 @@ module ProjectRazor
       # of BMC Slice sub-commands
       DEFAULT_FIELDS_ARRAY = %W[uuid mac ip current_power_state board_serial_number]
 
-      # Initializes ProjectRazor::Slice::Model including #slice_commands, #slice_commands_help, & #slice_name
+      # Initializes ProjectRazor::Slice::Model including #slice_commands, #slice_commands_help
       # @param args [Array]
       def initialize(args)
         super(args)
@@ -47,7 +47,7 @@ module ProjectRazor
           begin
             # load the option items for this command (if they exist) and print them
             option_items = load_option_items(:command => command.to_sym)
-            print_command_help(slice_name.downcase, command, option_items)
+            print_command_help(command, option_items)
             return
           rescue
           end
