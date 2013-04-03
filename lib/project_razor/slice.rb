@@ -20,7 +20,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
     @web_command = false
     @prev_args = Stack.new
     @hidden = true
-    @helper_message_objects = nil
     setup_data
     @uri_root = ProjectRazor.config.mk_uri + "/razor/api/"
   end
