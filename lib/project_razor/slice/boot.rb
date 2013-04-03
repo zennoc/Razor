@@ -14,7 +14,6 @@ module ProjectRazor
         @slice_commands = { :boot    => "boot_call",
                             :default => :boot,
                             :else    => :boot }
-        @slice_name = "Boot"
         @engine = ProjectRazor::Engine.instance
       end
 

@@ -24,6 +24,13 @@ class ProjectRazor::Slice < ProjectRazor::Object
     @data = get_data
   end
 
+  # Return the name of this slice - essentially, the final classname without
+  # the leading hierarchy.  Not cached, because this is seldom used, and is
+  # never on the hot path.
+  def slice_name
+    self.class.name.sub(/^.*:/, '')
+  end
+
   # Default call method for a slice
   # Used by {./bin/project_razor}
   # Parses the #command_array and determines the action based on #slice_commands for child object
@@ -125,7 +132,7 @@ class ProjectRazor::Slice < ProjectRazor::Object
     if @web_command
       puts JSON.dump(return_hash)
     else
-      print "\n\n#{@slice_name.capitalize}"
+      print "\n\n#{slice_name.capitalize}"
       print " #{return_hash["command"]}\n"
       print " #{return_hash["response"]}\n"
     end
@@ -188,7 +195,7 @@ class ProjectRazor::Slice < ProjectRazor::Object
 
   def list_help(return_hash = nil)
     if return_hash != nil
-      print "[#{@slice_name.capitalize}] "
+      print "[#{slice_name.capitalize}] "
       print "[#{return_hash["command"]}] ".red
       print "<-#{return_hash["result"]}\n".yellow
     end
@@ -204,12 +211,12 @@ class ProjectRazor::Slice < ProjectRazor::Object
     begin
       return YAML.load_file(slice_option_items_file(options))
     rescue => e
-      raise ProjectRazor::Error::Slice::SliceCommandParsingFailed, "Slice #{@slice_name} cannot parse option items file"
+      raise ProjectRazor::Error::Slice::SliceCommandParsingFailed, "Slice #{slice_name} cannot parse option items file"
     end
   end
 
   def slice_option_items_file(options = {})
-    File.join(File.dirname(__FILE__), "slice/#{@slice_name.downcase}/#{options[:command].to_s}/option_items.yaml")
+    File.join(File.dirname(__FILE__), "slice/#{slice_name.downcase}/#{options[:command].to_s}/option_items.yaml")
   end
 
 
@@ -411,7 +418,7 @@ class ProjectRazor::Slice < ProjectRazor::Object
   # used by the slices to throw an error when an error occurred while attempting to parse
   # a slice command line
   def throw_syntax_error
-    command_str = "razor #{@slice_name.downcase} #{@prev_args.join(" ")}"
+    command_str = "razor #{slice_name.downcase} #{@prev_args.join(" ")}"
     command_str << " " + @command_array.join(" ") if @command_array && @command_array.length > 0
     raise ProjectRazor::Error::Slice::SliceCommandParsingFailed,
     "failed to parse slice command: '#{command_str}'; check usage"
@@ -428,7 +435,7 @@ class ProjectRazor::Slice < ProjectRazor::Object
   # supported by that slice
   def throw_get_by_uuid_not_supported
     raise ProjectRazor::Error::Slice::NotImplemented,
-    "there is no 'get_by_uuid' operation defined for the #{@slice_name} slice"
+    "there is no 'get_by_uuid' operation defined for the #{slice_name} slice"
   end
 
   # used by slices to construct a typical @slice_command hash map based on

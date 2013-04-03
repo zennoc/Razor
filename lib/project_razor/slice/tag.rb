@@ -11,7 +11,6 @@ module ProjectRazor
       def initialize(args)
         super(args)
         @hidden = false
-        @slice_name = "Tag"
         # get the slice commands map for this slice (based on the set
         # of commands that are typical for most slices)
         @slice_commands = get_command_map("tag_help",
@@ -79,7 +78,7 @@ module ProjectRazor
             # underscore character and swap the order when printing the command usage
             option_items = load_option_items(:command => command.to_sym)
             command, subcommand = command.split("_")
-            print_command_help(@slice_name.downcase, command, option_items, subcommand)
+            print_command_help(slice_name.downcase, command, option_items, subcommand)
             return
           rescue
           end

@@ -163,7 +163,6 @@ module ProjectRazor
         super(args)
         @hidden = false
 
-        @slice_name = "Log"
         @logfile = File.join(get_logfile_path, "project_razor.log")
         @slice_commands = { :get => "get_razor_log",
                             :default => :get,

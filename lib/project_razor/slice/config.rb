@@ -21,7 +21,6 @@ module ProjectRazor
           :default => :read,
           :else    => :read
         }
-        @slice_name = "Config"
         @engine = ProjectRazor::Engine.instance
       end
 

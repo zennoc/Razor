@@ -22,7 +22,6 @@ module ProjectRazor
       def initialize(args)
         super(args)
         @hidden = false
-        @slice_name = "Bmc"
         config = ProjectRazor.config
         @ipmi_username = config.default_ipmi_username
         @ipmi_password = config.default_ipmi_password
@@ -48,7 +47,7 @@ module ProjectRazor
           begin
             # load the option items for this command (if they exist) and print them
             option_items = load_option_items(:command => command.to_sym)
-            print_command_help(@slice_name.downcase, command, option_items)
+            print_command_help(slice_name.downcase, command, option_items)
             return
           rescue
           end
