@@ -31,7 +31,6 @@ module ProjectRazor
       end
 
       def read_config
-        setup_data
         if @web_command # is this a web command
           print ProjectRazor.config.to_hash.to_json
         else
@@ -45,8 +44,6 @@ module ProjectRazor
       end
 
       def generate_ipxe_script
-        setup_data
-
         @ipxe_options = {}
         @ipxe_options[:style] = :new
         @ipxe_options[:uri] =  ProjectRazor.config.mk_uri

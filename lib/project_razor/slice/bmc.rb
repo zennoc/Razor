@@ -121,7 +121,6 @@ module ProjectRazor
       # @param [String] uuid
       # @return [ProjectRazor::PowerControl::Bmc]
       def get_bmc_with_uuid(uuid)
-        setup_data
         existing_bmc = get_object("bmc_instance", :bmc, uuid)
         existing_bmc.refresh_power_state if existing_bmc && (existing_bmc.class != Array || existing_bmc.length > 0)
         existing_bmc
@@ -333,7 +332,6 @@ module ProjectRazor
       # @param [Hash] bmc_hash
       # @return [ProjectRazor::PowerControl::Bmc]
       def insert_bmc(bmc_hash)
-        setup_data
         bmc = @data.fetch_object_by_uuid(:bmc, bmc_hash['@uuid'])
         # if we have a matching BMC already in the database with that name
         if bmc != nil

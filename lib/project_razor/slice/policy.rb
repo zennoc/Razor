@@ -125,7 +125,6 @@ module ProjectRazor
 
         # check for errors in inputs
         raise ProjectRazor::Error::Slice::InvalidPolicyTemplate, "Policy Template is not valid [#{options[:template]}]" unless policy
-        setup_data
         model = get_object("model_by_uuid", :model, options[:model_uuid])
         raise ProjectRazor::Error::Slice::InvalidUUID, "Invalid Model UUID [#{options[:model_uuid]}]" unless model && (model.class != Array || model.length > 0)
         raise ProjectRazor::Error::Slice::InvalidModel, "Invalid Model Type [#{model.template}] != [#{policy.template}]" unless policy.template.to_s == model.template.to_s
@@ -218,7 +217,6 @@ module ProjectRazor
         policy_uuid = get_uuid_from_prev_args
         policy = get_object("policy_with_uuid", :policy, policy_uuid)
         raise ProjectRazor::Error::Slice::InvalidUUID, "Cannot Find Policy with UUID: [#{policy_uuid}]" unless policy && (policy.class != Array || policy.length > 0)
-        setup_data
         raise ProjectRazor::Error::Slice::CouldNotRemove, "Could not remove policy [#{policy.uuid}]" unless @data.delete_object(policy)
         slice_success("Active policy [#{policy.uuid}] removed", :success_type => :removed)
       end
@@ -241,7 +239,6 @@ module ProjectRazor
       def make_callback(active_model, callback_namespace)
         callback = active_model.model.callback[callback_namespace]
         raise ProjectRazor::Error::Slice::NoCallbackFound, "Missing callback" unless callback
-        setup_data
         node            = @data.fetch_object_by_uuid(:node, active_model.node_uuid)
         callback_return = active_model.model.callback_init(callback, @command_array, node, active_model.uuid, active_model.broker)
         active_model.update_self

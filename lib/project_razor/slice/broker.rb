@@ -118,7 +118,6 @@ module ProjectRazor
         broker.user_description = description
         broker.is_template      = false
         # persist that broker, and print the result (or raise an error if cannot persist it)
-        setup_data
         get_data.persist_object(broker)
         broker ? print_object_array([broker], "", :success_type => :created) : raise(ProjectRazor::Error::Slice::CouldNotCreate, "Could not create Broker Target")
       end
@@ -228,7 +227,6 @@ module ProjectRazor
         broker_uuid = get_uuid_from_prev_args
         broker = get_object("broker_with_uuid", :broker, broker_uuid)
         raise ProjectRazor::Error::Slice::InvalidUUID, "Cannot Find Broker with UUID: [#{broker_uuid}]" unless broker && (broker.class != Array || broker.length > 0)
-        setup_data
         raise ProjectRazor::Error::Slice::CouldNotRemove, "Could not remove policy [#{broker.uuid}]" unless @data.delete_object(broker)
         slice_success("Broker [#{broker.uuid}] removed", :success_type => :removed)
       end

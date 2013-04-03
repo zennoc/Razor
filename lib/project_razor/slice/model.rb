@@ -117,7 +117,6 @@ module ProjectRazor
         model.label = label
         model.image_uuid = image.uuid
         model.is_template = false
-        setup_data
         @data.persist_object(model)
         model ? print_object_array([model], "Model created", :success_type => :created) : raise(ProjectRazor::Error::Slice::CouldNotCreate, "Could not create Model")
       end
@@ -196,7 +195,6 @@ module ProjectRazor
         model_uuid = get_uuid_from_prev_args
         model = get_object("model_with_uuid", :model, model_uuid)
         raise ProjectRazor::Error::Slice::InvalidUUID, "Cannot Find Model with UUID: [#{model_uuid}]" unless model && (model.class != Array || model.length > 0)
-        setup_data
         raise ProjectRazor::Error::Slice::CouldNotRemove, "Could not remove Model [#{model.uuid}]" unless @data.delete_object(model)
         slice_success("Active Model [#{model.uuid}] removed",:success_type => :removed)
       end
@@ -207,7 +205,6 @@ module ProjectRazor
       end
 
       def verify_image(model, image_uuid)
-        setup_data
         image = get_object("find_image", :images, image_uuid)
         if image && (image.class != Array || image.length > 0)
           return image if model.image_prefix == image.path_prefix

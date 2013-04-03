@@ -161,7 +161,6 @@ module ProjectRazor
       end
 
       def insert_image(image_obj)
-        setup_data
         image_obj = @data.persist_object(image_obj)
         image_obj.refresh_self
       end
@@ -188,8 +187,6 @@ module ProjectRazor
         image_uuid = get_uuid_from_prev_args
         raise ProjectRazor::Error::Slice::MissingArgument, '[uuid]' unless image_uuid
 
-        #setup_data
-        #image_selected = @data.fetch_object_by_uuid(:images, image_uuid)
         image_selected = get_object("image_with_uuid", :images, image_uuid)
         unless image_selected && (image_selected.class != Array || image_selected.length > 0)
           raise ProjectRazor::Error::Slice::InvalidUUID, "invalid uuid [#{image_uuid.inspect}]"

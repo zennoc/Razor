@@ -144,7 +144,6 @@ module ProjectRazor
         # then persist the tagrule object
         tagrule = ProjectRazor::Tagging::TagRule.new({"@name" => options[:name], "@tag" => options[:tag]})
         raise(ProjectRazor::Error::Slice::CouldNotCreate, "Could not create Tag Rule") unless tagrule
-        setup_data
         @data.persist_object(tagrule)
         print_object_array([tagrule], "", :success_type => :created)
       end
@@ -186,7 +185,6 @@ module ProjectRazor
         tagrule_uuid = get_uuid_from_prev_args
         tagrule = get_object("tagrule_with_uuid", :tag, tagrule_uuid)
         raise ProjectRazor::Error::Slice::InvalidUUID, "Cannot Find Tag Rule with UUID: [#{tagrule_uuid}]" unless tagrule && (tagrule.class != Array || tagrule.length > 0)
-        setup_data
         raise ProjectRazor::Error::Slice::CouldNotRemove, "Could not remove Tag Rule [#{tagrule.uuid}]" unless @data.delete_object(tagrule)
         slice_success("Tag Rule [#{tagrule.uuid}] removed", :success_type => :removed)
       end
@@ -196,7 +194,6 @@ module ProjectRazor
 
       def find_matcher(matcher_uuid)
         found_matcher = []
-        setup_data
         @data.fetch_all_objects(:tag).each do
         |tr|
           tr.tag_matchers.each do

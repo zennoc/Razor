@@ -20,8 +20,8 @@ class ProjectRazor::Slice < ProjectRazor::Object
     @web_command = false
     @prev_args = Stack.new
     @hidden = true
-    setup_data
     @uri_root = ProjectRazor.config.mk_uri + "/razor/api/"
+    @data = get_data
   end
 
   # Default call method for a slice
@@ -121,7 +121,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
     return_hash["http_err_code"] = success_types[type][:http_code]
     return_hash["errcode"] = 0
     return_hash["response"] = response
-    setup_data
     return_hash["client_config"] = ProjectRazor.config.get_client_config_hash if mk_response
     if @web_command
       puts JSON.dump(return_hash)
@@ -159,7 +158,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
   # @param [Hash] error
   def slice_error(error, options = {})
     mk_response = options[:mk_response] ? options[:mk_response] : false
-    setup_data
     return_hash = {}
     log_level = :error
     if error.class.ancestors.include?(ProjectRazor::Error::Slice::Generic)
@@ -212,11 +210,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
 
   def slice_option_items_file(options = {})
     File.join(File.dirname(__FILE__), "slice/#{@slice_name.downcase}/#{options[:command].to_s}/option_items.yaml")
-  end
-
-  # Initializes [ProjectRazor::Data] in not already instantiated
-  def setup_data
-    @data = get_data unless @data.class == ProjectRazor::Data
   end
 
 
@@ -547,13 +540,11 @@ class ProjectRazor::Slice < ProjectRazor::Object
   # @param filter [Hash] contains key/values used for filtering
   # @param collection [Symbol] collection symbol
   def return_objects_using_filter(collection, filter_hash)
-    setup_data
     @data.fetch_objects_by_filter(collection, filter_hash)
   end
 
   # Return all objects (no filtering)
   def return_objects(collection)
-    setup_data
     @data.fetch_all_objects(collection)
   end
 
@@ -561,7 +552,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
   # @param filter [Hash] contains key/values used for filtering
   # @param collection [Symbol] collection symbol
   def return_objects_using_uuid(collection, uuid)
-    setup_data
     @data.fetch_object_by_uuid_pattern(collection, uuid)
   end
 
