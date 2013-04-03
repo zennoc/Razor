@@ -191,23 +191,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
     logger.send log_level, "Slice Error: #{return_hash["result"]}"
   end
 
-  # Prints available commands to CLI for slice
-  # @param [Hash] return_hash
-  def available_commands(return_hash)
-    print "\nAvailable commands for [#@slice_name]:\n"
-    @slice_commands.each_key do
-      |k|
-      print "[#{k}] ".yellow unless k == :default
-    end
-    print "\n\n"
-    if return_hash != nil
-      print "[#{@slice_name.capitalize}] "
-      print "[#{return_hash["command"]}] ".red
-      print "<-#{return_hash["result"]}\n".yellow
-      puts "\nCommand syntax:" + " #{@slice_commands_help[@command]}".red + "\n" unless @slice_commands_help[@command] == nil
-    end
-  end
-
   def list_help(return_hash = nil)
     if return_hash != nil
       print "[#{@slice_name.capitalize}] "
@@ -282,7 +265,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
     def join(sep)
       @array.join(sep)
     end
-
   end
 
   def get_options(options = { }, optparse_options = { })
