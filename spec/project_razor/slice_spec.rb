@@ -10,40 +10,6 @@ describe ProjectRazor::Slice do
   # end
 
   context "code formerly known as SliceUtil::Common" do
-    describe "get_web_args" do
-      it "should return value for matching key" do
-        ProjectRazor::Slice.new(['{"@k1":"v1","@k2":"v2","@k3":"v3"}']).
-          get_web_vars(['k1', 'k2']).should == ['v1','v2']
-      end
-
-      it "should return nil element for nonmatching key" do
-        ProjectRazor::Slice.new(['{"@k1":"v1","@k2":"v2","@k3":"v3"}']).
-          get_web_vars(['k1', 'k4']).should == ['v1', nil]
-      end
-
-      it "should return nil for invalid JSON" do
-        ProjectRazor::Slice.new(['\3"}']).get_web_vars(['k1', 'k2']).should == nil
-      end
-    end
-
-    describe "get_cli_args" do
-      TestArgs = [
-        "template=debian_wheezy",
-        "label=debian",
-        "image_uuid=3RpS0x2KWmITuAsHALa3Ni"
-      ]
-
-      it "should return value for matching key" do
-        ProjectRazor::Slice.new(TestArgs).get_cli_vars(['template', 'label']).
-          should == ['debian_wheezy', 'debian']
-      end
-
-      it "should return nil element for nonmatching key" do
-        ProjectRazor::Slice.new(TestArgs).get_cli_vars(['template', 'foo']).
-          should == ['debian_wheezy', nil]
-      end
-    end
-
     describe "validate_arg" do
       subject('slice') { ProjectRazor::Slice.new([]) }
       it "should return false for empty values" do

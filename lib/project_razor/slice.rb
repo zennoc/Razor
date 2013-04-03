@@ -285,24 +285,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
 
   end
 
-  def get_web_vars(vars_array)
-    begin
-      vars_hash = sanitize_hash(JSON.parse(@command_array.shift))
-      vars_array.collect { |k| vars_hash[k] if vars_hash.has_key? k }
-    rescue JSON::ParserError
-      # TODO: Determine if logging appropriate
-      return nil
-    rescue Exception => e
-      # TODO: Determine if throwing exception appropriate
-      raise e
-    end
-  end
-
-  def get_cli_vars(vars_array)
-    vars_hash = Hash[@command_array.collect { |x| x.split("=") }]
-    vars_array.collect { |k| vars_hash[k] if vars_hash.has_key? k }
-  end
-
   def get_options(options = { }, optparse_options = { })
     optparse_options[:banner] ||= "razor [command] [options...]"
     OptionParser.new do |opts|
