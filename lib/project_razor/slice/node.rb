@@ -9,16 +9,20 @@ module ProjectRazor
         super(args)
         @hidden          = false
         @engine = ProjectRazor::Engine.instance
+      end
+
+      def slice_commands
         # get the slice commands map for this slice (based on the set
         # of commands that are typical for most slices); note that there is
         # no support for adding, updating, or removing nodes via the slice
         # API, so the last three arguments are nil
-        @slice_commands = get_command_map("node_help", "get_all_nodes",
+        commands = get_command_map("node_help", "get_all_nodes",
                                           "get_node_by_uuid", nil, nil, nil, nil)
         # and add a few more commands specific to this slice
-        @slice_commands[["register", /^[Rr]$/]] = "register_node"
-        @slice_commands[["checkin", /^[Cc]$/]] = "checkin_node"
-        @slice_commands[:get][/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/][:else] = "get_node_by_uuid"
+        commands[["register", /^[Rr]$/]] = "register_node"
+        commands[["checkin", /^[Cc]$/]] = "checkin_node"
+        commands[:get][/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/][:else] = "get_node_by_uuid"
+        commands
       end
 
       def node_help

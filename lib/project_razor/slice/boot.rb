@@ -11,10 +11,13 @@ module ProjectRazor
       def initialize(args)
         super(args)
         @hidden = true
-        @slice_commands = { :boot    => "boot_call",
-                            :default => :boot,
-                            :else    => :boot }
         @engine = ProjectRazor::Engine.instance
+      end
+
+      def slice_commands
+        { :boot    => "boot_call",
+          :default => :boot,
+          :else    => :boot }
       end
 
       def boot_call

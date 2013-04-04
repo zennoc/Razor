@@ -17,20 +17,25 @@ module ProjectRazor
       def initialize(args)
         super(args)
         @hidden          = false
+      end
 
+      def slice_commands
         # get the slice commands map for this slice (based on the set
         # of commands that are typical for most slices)
-        @slice_commands = get_command_map("broker_help",
-                                          "get_all_brokers",
-                                          "get_broker_by_uuid",
-                                          "add_broker",
-                                          "update_broker",
-                                          "remove_all_brokers",
-                                          "remove_broker_by_uuid")
-        # and add any additional commands specific to this slice
-        @slice_commands[:get].delete(/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/)
-        @slice_commands[:get][:else] = "get_broker_by_uuid"
-        @slice_commands[:get][[/^(plugin|plugins|t)$/]] = "get_broker_plugins"
+        commands = get_command_map(
+          "broker_help",
+          "get_all_brokers",
+          "get_broker_by_uuid",
+          "add_broker",
+          "update_broker",
+          "remove_all_brokers",
+          "remove_broker_by_uuid")
+
+        commands[:get].delete(/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/)
+        commands[:get][:else] = "get_broker_by_uuid"
+        commands[:get][[/^(plugin|plugins|t)$/]] = "get_broker_plugins"
+
+        commands
       end
 
       def broker_help

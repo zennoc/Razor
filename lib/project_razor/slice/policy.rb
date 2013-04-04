@@ -21,22 +21,25 @@ module ProjectRazor
         super(args)
         @hidden          = false
         @policies        = ProjectRazor::Policies.instance
+      end
 
+      def slice_commands
         # get the slice commands map for this slice (based on the set
         # of commands that are typical for most slices)
-        @slice_commands = get_command_map("policy_help",
-                                          "get_all_policies",
-                                          "get_policy_by_uuid",
-                                          "add_policy",
-                                          "update_policy",
-                                          "remove_all_policies",
-                                          "remove_policy_by_uuid")
+        commands = get_command_map(
+          "policy_help",
+          "get_all_policies",
+          "get_policy_by_uuid",
+          "add_policy",
+          "update_policy",
+          "remove_all_policies",
+          "remove_policy_by_uuid")
         # and add any additional commands specific to this slice
-        @slice_commands[:get].delete(/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/)
-        @slice_commands[:get][:else] = "get_policy_by_uuid"
-        @slice_commands[:get][[/^(temp|template|templates|types)$/]] = "get_policy_templates"
-        @slice_commands[:get][[/^(callback)$/]] = "get_callback"
-
+        commands[:get].delete(/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/)
+        commands[:get][:else] = "get_policy_by_uuid"
+        commands[:get][[/^(temp|template|templates|types)$/]] = "get_policy_templates"
+        commands[:get][[/^(callback)$/]] = "get_callback"
+        commands
       end
 
       def policy_help

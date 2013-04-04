@@ -25,20 +25,23 @@ module ProjectRazor
         config = ProjectRazor.config
         @ipmi_username = config.default_ipmi_username
         @ipmi_password = config.default_ipmi_password
+      end
 
-        # get the slice commands map for this slice (based on the set
-        # of commands that are typical for most slices)
-        @slice_commands = get_command_map("bmc_help",
-                                          "get_all_bmcs",
-                                          "get_bmc_by_uuid",
-                                          nil,
-                                          "update_bmc_power_state",
-                                          nil,
-                                          nil)
-        # and add any additional commands specific to this slice
-        @slice_commands[:register] = "register_bmc"
-        @slice_commands[:get][/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/][:update] = "update_bmc_power_state"
-        @slice_commands[:get][/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/][:else] = "get_bmc_by_uuid"
+      def slice_commands
+        commands = get_command_map(
+          "bmc_help",
+          "get_all_bmcs",
+          "get_bmc_by_uuid",
+          nil,
+          "update_bmc_power_state",
+          nil,
+          nil)
+
+        commands[:register] = "register_bmc"
+        commands[:get][/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/][:update] = "update_bmc_power_state"
+        commands[:get][/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/][:else] = "get_bmc_by_uuid"
+
+        commands
       end
 
       def bmc_help

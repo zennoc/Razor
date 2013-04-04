@@ -16,10 +16,12 @@ module ProjectRazor
       def initialize(args)
         super(args)
         @hidden = false
+      end
 
+      def slice_commands
         # get the slice commands map for this slice (based on the set
         # of commands that are typical for most slices)
-        @slice_commands = get_command_map(
+        get_command_map(
           "image_help",
           "get_images",
           "get_image_by_uuid",

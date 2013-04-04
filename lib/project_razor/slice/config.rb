@@ -13,15 +13,17 @@ module ProjectRazor
       def initialize(args)
         super(args)
         @hidden = true
-        # Here we create a hash of the command string to the method it corresponds to for routing.
-        @slice_commands = {
-          :read    => "read_config",
+        @engine = ProjectRazor::Engine.instance
+      end
+
+      def slice_commands
+        # Here we create a hash of the command string to the method it
+        # corresponds to for routing.
+        { :read    => "read_config",
           :dbcheck => "db_check",
           :ipxe    => "generate_ipxe_script",
           :default => :read,
-          :else    => :read
-        }
-        @engine = ProjectRazor::Engine.instance
+          :else    => :read }
       end
 
       def db_check

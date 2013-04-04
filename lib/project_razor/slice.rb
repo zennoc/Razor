@@ -16,7 +16,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
   def initialize(args)
     @command_array = args
     @command_help_text = ""
-    @slice_commands = {}
     @web_command = false
     @prev_args = Stack.new
     @hidden = true
@@ -31,12 +30,17 @@ class ProjectRazor::Slice < ProjectRazor::Object
     self.class.name.sub(/^.*:/, '')
   end
 
+  def slice_commands
+    fail "Unfortunately, the #{slice_name} slice chose not to define any commands!"
+  end
+  private 'slice_commands'
+
   # Default call method for a slice
   # Used by {./bin/project_razor}
-  # Parses the #command_array and determines the action based on #slice_commands for child object
+  # Parses the #command_array and determines the action based on slice_commands for child object
   def slice_call
     begin
-      @command_hash = @slice_commands
+      @command_hash = slice_commands
       eval_command
     rescue => e
       if @debug

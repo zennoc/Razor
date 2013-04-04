@@ -11,19 +11,24 @@ module ProjectRazor
         super(args)
         @hidden          = false
         @policies        = ProjectRazor::Policies.instance
+      end
 
-        # get the slice commands map for this slice (based on the set
-        # of commands that are typical for most slices)
-        @slice_commands = get_command_map("active_model_help",
-                                          "get_all_active_models",
-                                          "get_active_model_by_uuid",
-                                          nil,
-                                          nil,
-                                          "remove_all_active_models",
-                                          "remove_active_model_by_uuid")
-        # and add any additional commands specific to this slice
-        @slice_commands[:logview] = "get_logview"
-        @slice_commands[:get][/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/][:logs] = "get_active_model_logs"
+      def slice_commands
+        # get the slice commands map for this slice (based on the set of
+        # commands that are typical for most slices)
+        commands = get_command_map(
+          "active_model_help",
+          "get_all_active_models",
+          "get_active_model_by_uuid",
+          nil,
+          nil,
+          "remove_all_active_models",
+          "remove_active_model_by_uuid")
+
+        commands[:logview] = "get_logview"
+        commands[:get][/^(?!^(all|\-\-help|\-h|\{\}|\{.*\}|nil)$)\S+$/][:logs] = "get_active_model_logs"
+
+        commands
       end
 
       def active_model_help

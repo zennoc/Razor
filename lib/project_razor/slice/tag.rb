@@ -11,9 +11,12 @@ module ProjectRazor
       def initialize(args)
         super(args)
         @hidden = false
+      end
+
+      def slice_commands
         # get the slice commands map for this slice (based on the set
         # of commands that are typical for most slices)
-        @slice_commands = get_command_map("tag_help",
+        commands = get_command_map("tag_help",
                                           "get_all_tagrules",
                                           "get_tagrule_by_uuid",
                                           "add_tagrule",
@@ -22,49 +25,51 @@ module ProjectRazor
                                           "remove_tagrule_by_uuid")
         # and add the corresponding 'matcher' commands to the set of slice_commands
         tag_uuid_match = /^((?!(matcher|add|get|remove|update|default)))\S+/
-        @slice_commands[tag_uuid_match] = {}
-        @slice_commands[tag_uuid_match][:default] = "get_tagrule_by_uuid"
-        @slice_commands[tag_uuid_match][:else] = "get_tagrule_by_uuid"
-        @slice_commands[tag_uuid_match][:matcher] = {}
+        commands[tag_uuid_match] = {}
+        commands[tag_uuid_match][:default] = "get_tagrule_by_uuid"
+        commands[tag_uuid_match][:else] = "get_tagrule_by_uuid"
+        commands[tag_uuid_match][:matcher] = {}
         # add a few more commands to support the use of "tag matcher" help without
         # having to include a tag UUID in the help command (i.e. commands like
         # "razor tag matcher update --help" or "razor tag matcher add --help")
-        @slice_commands[:matcher] = {}
-        @slice_commands[:matcher][:else] = "tag_help"
-        @slice_commands[:matcher][:default] = "tag_help"
+        commands[:matcher] = {}
+        commands[:matcher][:else] = "tag_help"
+        commands[:matcher][:default] = "tag_help"
         # adding a tag matcher
-        @slice_commands[tag_uuid_match][:matcher][:add] = {}
-        @slice_commands[tag_uuid_match][:matcher][:add][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:add][:default] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:add][:else] = "add_matcher"
+        commands[tag_uuid_match][:matcher][:add] = {}
+        commands[tag_uuid_match][:matcher][:add][/^(--help|-h)$/] = "tag_help"
+        commands[tag_uuid_match][:matcher][:add][:default] = "tag_help"
+        commands[tag_uuid_match][:matcher][:add][:else] = "add_matcher"
         # add support for the "tag matcher update help" commands
-        @slice_commands[:matcher][:add] = {}
-        @slice_commands[:matcher][:add][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[:matcher][:add][:default] = "throw_syntax_error"
-        @slice_commands[:matcher][:add][:else] = "throw_syntax_error"
+        commands[:matcher][:add] = {}
+        commands[:matcher][:add][/^(--help|-h)$/] = "tag_help"
+        commands[:matcher][:add][:default] = "throw_syntax_error"
+        commands[:matcher][:add][:else] = "throw_syntax_error"
         # updating a tag matcher
-        @slice_commands[tag_uuid_match][:matcher][:update] = {}
-        @slice_commands[tag_uuid_match][:matcher][:update][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:update][:default] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:update][/^(?!^(all|\-\-help|\-h)$)\S+$/] = "update_matcher"
+        commands[tag_uuid_match][:matcher][:update] = {}
+        commands[tag_uuid_match][:matcher][:update][/^(--help|-h)$/] = "tag_help"
+        commands[tag_uuid_match][:matcher][:update][:default] = "tag_help"
+        commands[tag_uuid_match][:matcher][:update][/^(?!^(all|\-\-help|\-h)$)\S+$/] = "update_matcher"
         # add support for the "tag matcher update help" commands
-        @slice_commands[:matcher][:update] = {}
-        @slice_commands[:matcher][:update][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[:matcher][:update][:default] = "throw_syntax_error"
-        @slice_commands[:matcher][:update][:else] = "throw_syntax_error"
+        commands[:matcher][:update] = {}
+        commands[:matcher][:update][/^(--help|-h)$/] = "tag_help"
+        commands[:matcher][:update][:default] = "throw_syntax_error"
+        commands[:matcher][:update][:else] = "throw_syntax_error"
         # removing a tag matcher
-        @slice_commands[tag_uuid_match][:matcher][:remove] = {}
-        @slice_commands[tag_uuid_match][:matcher][:remove][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:remove][:default] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:remove][/^(?!^(all|\-\-help|\-h)$)\S+$/] = "remove_matcher"
+        commands[tag_uuid_match][:matcher][:remove] = {}
+        commands[tag_uuid_match][:matcher][:remove][/^(--help|-h)$/] = "tag_help"
+        commands[tag_uuid_match][:matcher][:remove][:default] = "tag_help"
+        commands[tag_uuid_match][:matcher][:remove][/^(?!^(all|\-\-help|\-h)$)\S+$/] = "remove_matcher"
         # add support for the "tag matcher remove help" commands
-        @slice_commands[:matcher][:remove] = {}
-        @slice_commands[:matcher][:remove][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[:matcher][:remove][:default] = "throw_syntax_error"
-        @slice_commands[:matcher][:remove][:else] = "throw_syntax_error"
+        commands[:matcher][:remove] = {}
+        commands[:matcher][:remove][/^(--help|-h)$/] = "tag_help"
+        commands[:matcher][:remove][:default] = "throw_syntax_error"
+        commands[:matcher][:remove][:else] = "throw_syntax_error"
         # getting a tag matcher
-        @slice_commands[tag_uuid_match][:matcher][:else] = "get_matcher_by_uuid"
-        @slice_commands[tag_uuid_match][:matcher][:default] = "throw_missing_uuid_error"
+        commands[tag_uuid_match][:matcher][:else] = "get_matcher_by_uuid"
+        commands[tag_uuid_match][:matcher][:default] = "throw_missing_uuid_error"
+
+        commands
       end
 
       def tag_help
