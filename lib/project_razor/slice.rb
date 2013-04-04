@@ -40,8 +40,7 @@ class ProjectRazor::Slice < ProjectRazor::Object
   # Parses the #command_array and determines the action based on slice_commands for child object
   def slice_call
     begin
-      @command_hash = slice_commands
-      eval_command
+      eval_command(slice_commands)
     rescue => e
       if @debug
         raise e
@@ -69,13 +68,12 @@ class ProjectRazor::Slice < ProjectRazor::Object
   end
   private 'coercively_equal'
 
-  def eval_command
+  def eval_command(command_hash)
     unless @command_array.count > 0
       # No commands or arguments are left, we need to call the :default action
-      if @command_hash[:default]
+      if command_hash[:default]
         # No command specified using calling (default)
-        eval_action(@command_hash[:default])
-        return
+        return eval_action(command_hash, :default)
       else
         # No (default) action defined
         raise ProjectRazor::Error::Slice::Generic, "No Default Action"
@@ -83,35 +81,34 @@ class ProjectRazor::Slice < ProjectRazor::Object
     end
 
 
-    @command_hash.each do |k,v|
+    command_hash.each do |k,v|
       if coercively_equal(k, @command_array.first)
         @prev_args.push(@command_array.shift)
-        return eval_action(@command_hash[k])
+        return eval_action(command_hash, k)
       end
     end
 
     # We did not find a match, we call :else
-    if @command_hash[:else]
-      return eval_action(@command_hash[:else])
+    if command_hash[:else]
+      return eval_action(command_hash, :else)
     else
       # No (else) action defined
       raise ProjectRazor::Error::Slice::InvalidCommand, "System Error: no else action for slice"
     end
   end
 
-  def eval_action(command_action)
-    case command_action
-      # Symbol reroutes to another command
+  def eval_action(command_hash, command_action)
+    case command_hash[command_action]
     when Symbol
-      @command_array.unshift(command_action.to_s)
-      eval_command
-      # String calls a method
+      # Symbol reroutes to another command
+      @command_array.unshift(command_hash[command_action].to_s)
+      eval_command(command_hash)
     when String
-      self.send(command_action)
-      # A hash is iterated
+      # String calls a method
+      self.send(command_hash[command_action])
     when Hash
-      @command_hash = command_action
-      eval_command
+      # A hash is iterated
+      eval_command(command_hash[command_action])
     else
       raise "InvalidActionSlice"
     end
