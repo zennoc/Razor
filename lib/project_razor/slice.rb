@@ -203,11 +203,8 @@ class ProjectRazor::Slice < ProjectRazor::Object
       print "[#{return_hash["command"]}] ".red
       print "<-#{return_hash["result"]}\n".yellow
     end
-    @command_hash[:help] = "n/a" unless @command_hash[:help]
     if @command_help_text
       puts "\nCommand help:\n" +  @command_help_text
-    else
-      puts "\nCommand help:\n" +  @command_hash[:help]
     end
   end
 
