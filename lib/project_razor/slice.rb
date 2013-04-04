@@ -51,6 +51,23 @@ class ProjectRazor::Slice < ProjectRazor::Object
     end
   end
 
+  def coercively_equal(want, have)
+    case want
+    when Symbol, String
+      want.to_s == have.to_s
+
+    when Regexp
+      have =~ want
+
+    when Array
+      # We simply ignore `nil` values in the array, as per the original code.
+      want.reject(&:nil?).any? {|x| coercively_equal(x, have) }
+
+    else
+      fail "unknown coercive comparator class #{want.class}"
+    end
+  end
+  private 'coercively_equal'
 
   def eval_command
     unless @command_array.count > 0
@@ -67,13 +84,9 @@ class ProjectRazor::Slice < ProjectRazor::Object
 
 
     @command_hash.each do |k,v|
-      if (k.instance_of? Symbol and @command_array.first.to_s == k.to_s) or
-          (k.instance_of? String and @command_array.first.to_s == k.to_s) or
-          (k.instance_of? Regexp and @command_array.first =~ k) or
-          (k.instance_of? Array and eval_command_array(k))
+      if coercively_equal(k, @command_array.first)
         @prev_args.push(@command_array.shift)
         return eval_action(@command_hash[k])
-      else
       end
     end
 
@@ -84,17 +97,6 @@ class ProjectRazor::Slice < ProjectRazor::Object
       # No (else) action defined
       raise ProjectRazor::Error::Slice::InvalidCommand, "System Error: no else action for slice"
     end
-  end
-
-  def eval_command_array(command_array)
-    command_array.each do |command_item|
-      if (command_item.instance_of? String and @command_array.first.to_s == command_item) or
-          (command_item.instance_of? Regexp and @command_array.first =~ command_item)
-        return true
-      else
-      end
-    end
-    false
   end
 
   def eval_action(command_action)
