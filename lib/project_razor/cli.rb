@@ -177,7 +177,7 @@ class ProjectRazor::CLI
       end
 
       opts.on_tail('-V', '--version', 'Display the version of Razor'.yellow) do
-        print opts.banner
+        puts opts.banner
         exit
       end
 
