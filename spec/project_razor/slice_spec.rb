@@ -15,6 +15,20 @@ describe ProjectRazor::Slice do
         slice.validate_arg('foo','bar').should == ['foo', 'bar']
       end
     end
+  end
 
+  describe "#slice_name" do
+    {
+      "Bmc"          => "bmc",
+      "ActiveRecord" => "active_record"
+    }.each do |classname, slicename|
+      classname = "ProjectRazor::Slice::#{classname}"
+      it "should transform #{classname} into #{slicename}" do
+        # This is kind of ugly, thanks Ruby. :/
+        klass = Class.new(ProjectRazor::Slice)
+        klass.stub(:name => classname)
+        klass.new([]).slice_name.should == slicename
+      end
+    end
   end
 end
