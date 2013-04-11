@@ -2,13 +2,6 @@ require 'spec_helper'
 require 'project_razor/slice'
 
 describe ProjectRazor::Slice do
-  # before :each do
-  #   @test = TestClass.new
-  #   @test.extend(ProjectRazor::SliceUtil::Common)
-  #   # TODO: Review external dependencies here:
-  #   @test.extend(ProjectRazor::Utility)
-  # end
-
   context "code formerly known as SliceUtil::Common" do
     describe "validate_arg" do
       subject('slice') { ProjectRazor::Slice.new([]) }
