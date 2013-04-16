@@ -213,7 +213,7 @@ class ProjectRazor::Slice < ProjectRazor::Object
     end
   end
 
-  def load_option_items(command)
+  def command_option_data(command)
     begin
       file = File.join(File.dirname(__FILE__), "slice/#{slice_name}/#{command}/option_items.yaml")
       return YAML.load_file(file)

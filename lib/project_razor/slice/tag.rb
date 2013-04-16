@@ -81,7 +81,7 @@ module ProjectRazor
             # the command update_matcher (or add_matcher) actually appears on the CLI as
             # the command razor tag (UUID) matcher update (or add), so need to split on the
             # underscore character and swap the order when printing the command usage
-            option_items = load_option_items(command)
+            option_items = command_option_data(command)
             command, subcommand = command.split("_")
             print_command_help(command, option_items, subcommand)
             return
@@ -133,7 +133,7 @@ module ProjectRazor
         @command = :add_tagrule
         includes_uuid = false
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:add)
+        option_items = command_option_data(:add)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)
@@ -156,7 +156,7 @@ module ProjectRazor
         @command = :update_tagrule
         includes_uuid = false
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:update)
+        option_items = command_option_data(:update)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return the options map constructed
         # from the @commmand_array)
@@ -222,7 +222,7 @@ module ProjectRazor
         includes_uuid = false
         tagrule_uuid = @prev_args.peek(2)
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:add_matcher)
+        option_items = command_option_data(:add_matcher)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)
@@ -252,7 +252,7 @@ module ProjectRazor
         includes_uuid = false
         tagrule_uuid = @prev_args.peek(2)
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:update_matcher)
+        option_items = command_option_data(:update_matcher)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)
