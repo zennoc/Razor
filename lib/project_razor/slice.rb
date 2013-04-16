@@ -215,16 +215,12 @@ class ProjectRazor::Slice < ProjectRazor::Object
 
   def load_option_items(command)
     begin
-      return YAML.load_file(slice_option_items_file(command))
+      file = File.join(File.dirname(__FILE__), "slice/#{slice_name}/#{command}/option_items.yaml")
+      return YAML.load_file(file)
     rescue => e
       raise ProjectRazor::Error::Slice::SliceCommandParsingFailed, "Slice #{slice_name} cannot parse option items file"
     end
   end
-
-  def slice_option_items_file(command)
-    File.join(File.dirname(__FILE__), "slice/#{slice_name}/#{command}/option_items.yaml")
-  end
-
 
   # here, we define a Stack class that simply delegates the equivalent "push", "pop",
   # "to_s" and "clear" calls to the underlying Array object using the delegation
