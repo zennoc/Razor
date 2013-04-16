@@ -56,7 +56,7 @@ module ProjectRazor
           end
         end
         # if here, then either there are no specific options for the current command or we've
-        # been asked for generic help, so provide generic help          print_command_help("bmc")
+        # been asked for generic help, so provide generic help          
         puts "BMC Slice: used to view the current list of BMCs; also used by to register".red
         puts "    new BMCs with Razor.".red
         puts "BMC Commands:".yellow
