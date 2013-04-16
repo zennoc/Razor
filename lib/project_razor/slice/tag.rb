@@ -135,11 +135,11 @@ module ProjectRazor
               :uuid_is     => 'not_allowed',
               :required    => true
             },
-            { :name        => :invert,
+            { :name        => :inverse,
               :default     => nil,
               :short_form  => '-i',
-              :long_form   => '--invert VALUE',
-              :description => 'Invert the match (true if key does not match value).',
+              :long_form   => '--inverse VALUE',
+              :description => 'Inverse the match (true if key does not match value).',
               :uuid_is     => 'not_allowed',
               :required    => false
             }
@@ -169,11 +169,11 @@ module ProjectRazor
               :uuid_is     => 'required',
               :required    => true
             },
-            { :name        => :invert,
+            { :name        => :inverse,
               :default     => nil,
               :short_form  => '-i',
-              :long_form   => '--invert VALUE',
-              :description => 'Invert the match (true|false).',
+              :long_form   => '--inverse VALUE',
+              :description => 'Inverse the match (true|false).',
               :uuid_is     => 'required',
               :required    => true
             }
