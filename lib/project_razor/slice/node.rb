@@ -25,6 +25,21 @@ module ProjectRazor
         commands
       end
 
+      def all_command_option_data
+        {
+          :get => [
+            { :name        => :field,
+              :default     => nil,
+              :short_form  => '-f',
+              :long_form   => '--field FIELD_NAME',
+              :description => 'The fieldname (attributes or hardware_id) to get',
+              :uuid_is     => 'required',
+              :required    => false
+            }
+          ]
+        }.freeze
+      end
+
       def node_help
         if @prev_args.length > 1
           command = @prev_args.peek(1)

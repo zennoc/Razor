@@ -44,6 +44,49 @@ module ProjectRazor
         commands
       end
 
+      def all_command_option_data
+        {
+          :get => [
+            { :name        => :query,
+              :default     => nil,
+              :short_form  => '-q',
+              :long_form   => '--query IPMI_QUERY',
+              :description => 'The IPMI query to run against a BMC',
+              :uuid_is     => 'required',
+              :required    => false
+            }
+          ],
+          :register => [
+            { :name        => :ip_address,
+              :default     => false,
+              :short_form  => '-i',
+              :long_form   => '--ip_address IP_ADDR',
+              :description => 'IP address for BMC being registered',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :mac_address,
+              :default     => false,
+              :short_form  => '-m',
+              :long_form   => '--mac_address MAC_ADDR',
+              :description => 'MAC address for BMC being registered',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            }
+          ],
+          :update => [
+            { :name        => :power_state,
+              :default     => nil,
+              :short_form  => "-p",
+              :long_form   => "--power-state NEW_STATE",
+              :description => "Used to transition the power-state of a node",
+              :uuid_is     => "required",
+              :required    => true
+            }
+          ]
+        }.freeze
+      end
+
       def bmc_help
         if @prev_args.length > 1
           command = @prev_args.peek(1)

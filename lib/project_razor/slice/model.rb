@@ -32,6 +32,63 @@ module ProjectRazor
         commands
       end
 
+      def all_command_option_data
+        {
+          :add => [
+            { :name        => :template,
+              :default     => false,
+              :short_form  => '-t',
+              :long_form   => '--template MODEL_TEMPLATE',
+              :description => 'The model template to use for the new model.',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :label,
+              :default     => false,
+              :short_form  => '-l',
+              :long_form   => '--label MODEL_LABEL',
+              :description => 'The label to use for the new model.',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :image_uuid,
+              :default     => false,
+              :short_form  => '-i',
+              :long_form   => '--image-uuid IMAGE_UUID',
+              :description => 'The image UUID to use for the new model.',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            }
+          ],
+          :update => [
+            { :name        => :label,
+              :default     => false,
+              :short_form  => '-l',
+              :long_form   => '--label MODEL_LABEL',
+              :description => 'The new label to use for the model.',
+              :uuid_is     => 'required',
+              :required    => true
+            },
+            { :name        => :image_uuid,
+              :default     => false,
+              :short_form  => '-i',
+              :long_form   => '--image-uuid IMAGE_UUID',
+              :description => 'The new image UUID to use for the model.',
+              :uuid_is     => 'required',
+              :required    => true
+            },
+            { :name        => :change_metadata,
+              :default     => false,
+              :short_form  => '-c',
+              :long_form   => '--change-metadata',
+              :description => 'Used to trigger a change in the model\'s meta-data',
+              :uuid_is     => 'required',
+              :required    => true
+            }
+          ]
+        }.freeze
+      end
+
       def model_help
         if @prev_args.length > 1
           command = @prev_args.peek(1)

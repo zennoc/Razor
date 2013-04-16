@@ -31,6 +31,45 @@ module ProjectRazor
           "remove_image")
       end
 
+      def all_command_option_data
+        {
+          :add => [
+            { :name        => :type,
+              :default     => nil,
+              :short_form  => '-t',
+              :long_form   => '--type TYPE',
+              :description => 'The type of image (mk, os, esxi, or xenserver)',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :path,
+              :default     => nil,
+              :short_form  => '-p',
+              :long_form   => '--path /path/to/iso',
+              :description => 'The local path to the image ISO',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :name,
+              :default     => nil,
+              :short_form  => '-n',
+              :long_form   => '--name IMAGE_NAME',
+              :description => 'The logical name to use (os images only)',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            },
+            { :name        => :version,
+              :default     => nil,
+              :short_form  => '-v',
+              :long_form   => '--version VERSION',
+              :description => 'The version to use (os images only)',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            }
+          ]
+        }.freeze
+      end
+
       def image_help
         if @prev_args.length > 1
           command = @prev_args.peek(1)

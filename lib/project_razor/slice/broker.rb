@@ -38,6 +38,63 @@ module ProjectRazor
         commands
       end
 
+      def all_command_option_data
+        {
+          :add => [
+            { :name        => :plugin,
+              :default     => false,
+              :short_form  => '-p',
+              :long_form   => '--plugin BROKER_PLUGIN',
+              :description => 'The broker plugin to use.',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :name,
+              :default     => false,
+              :short_form  => '-n',
+              :long_form   => '--name BROKER_NAME',
+              :description => 'The name for the broker target.',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :description,
+              :default     => false,
+              :short_form  => '-d',
+              :long_form   => '--description DESCRIPTION',
+              :description => 'A description for the broker target.',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            }
+          ],
+          :update  =>  [
+            { :name        => :name,
+              :default     => false,
+              :short_form  => '-n',
+              :long_form   => '--name BROKER_NAME',
+              :description => 'New name for the broker target.',
+              :uuid_is     => 'required',
+              :required    => true
+            },
+            { :name        => :description,
+              :default     => false,
+              :short_form  => '-d',
+              :long_form   => '--description DESCRIPTION',
+              :description => 'New description for the broker target.',
+              :uuid_is     => 'required',
+              :required    => true
+            },
+            { :name        => :change_metadata,
+              :default     => false,
+              :short_form  => '-c',
+              :long_form   => '--change-metadata',
+              :description => 'Used to trigger a change in the broker\'s meta-data',
+              :uuid_is     => 'required',
+              :required    =>true
+            }
+          ]
+        }.freeze
+      end
+
       def broker_help
         if @prev_args.length > 1
           command = @prev_args.peek(1)
