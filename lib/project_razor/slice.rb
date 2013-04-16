@@ -213,16 +213,16 @@ class ProjectRazor::Slice < ProjectRazor::Object
     end
   end
 
-  def load_option_items(options = {})
+  def load_option_items(command)
     begin
-      return YAML.load_file(slice_option_items_file(options))
+      return YAML.load_file(slice_option_items_file(command))
     rescue => e
       raise ProjectRazor::Error::Slice::SliceCommandParsingFailed, "Slice #{slice_name} cannot parse option items file"
     end
   end
 
-  def slice_option_items_file(options = {})
-    File.join(File.dirname(__FILE__), "slice/#{slice_name}/#{options[:command].to_s}/option_items.yaml")
+  def slice_option_items_file(command)
+    File.join(File.dirname(__FILE__), "slice/#{slice_name}/#{command}/option_items.yaml")
   end
 
 

@@ -30,7 +30,7 @@ module ProjectRazor
           command = @prev_args.peek(1)
           begin
             # load the option items for this command (if they exist) and print them
-            option_items = load_option_items(:command => command.to_sym)
+            option_items = load_option_items(command)
             print_command_help(command, option_items)
             return
           rescue
@@ -68,7 +68,7 @@ module ProjectRazor
         # ran one argument far when parsing if we were working with a web command
         @command_array.unshift(@prev_args.pop) if @web_command
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :get)
+        option_items = load_option_items(:get)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)

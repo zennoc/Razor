@@ -205,7 +205,7 @@ module ProjectRazor
         end
 
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :get_razor_log)
+        option_items = load_option_items(:get_razor_log)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)

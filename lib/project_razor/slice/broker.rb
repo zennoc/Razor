@@ -43,7 +43,7 @@ module ProjectRazor
           command = @prev_args.peek(1)
           begin
             # load the option items for this command (if they exist) and print them
-            option_items = load_option_items(:command => command.to_sym)
+            option_items = load_option_items(command)
             print_command_help(command, option_items)
             return
           rescue
@@ -95,7 +95,7 @@ module ProjectRazor
         @command = :add_broker
         includes_uuid = false
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :add)
+        option_items = load_option_items(:add)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)
@@ -130,7 +130,7 @@ module ProjectRazor
         @command = :update_broker
         includes_uuid = false
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :update)
+        option_items = load_option_items(:update)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)
@@ -189,7 +189,7 @@ module ProjectRazor
       def remove_broker
         @command = :remove_broker
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :remove)
+        option_items = load_option_items(:remove)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)
