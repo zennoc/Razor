@@ -11,16 +11,17 @@ module ProjectRazor
     # Used for image management
     class Image < ProjectRazor::Slice
 
-      # Initializes ProjectRazor::Slice::Model including #slice_commands, #slice_commands_help, & #slice_name
+      # Initializes ProjectRazor::Slice::Model including #slice_commands, #slice_commands_help
       # @param [Array] args
       def initialize(args)
         super(args)
         @hidden = false
-        @slice_name = "Image"
+      end
 
+      def slice_commands
         # get the slice commands map for this slice (based on the set
         # of commands that are typical for most slices)
-        @slice_commands = get_command_map(
+        get_command_map(
           "image_help",
           "get_images",
           "get_image_by_uuid",
@@ -30,13 +31,52 @@ module ProjectRazor
           "remove_image")
       end
 
+      def all_command_option_data
+        {
+          :add => [
+            { :name        => :type,
+              :default     => nil,
+              :short_form  => '-t',
+              :long_form   => '--type TYPE',
+              :description => 'The type of image (mk, os, esxi, or xenserver)',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :path,
+              :default     => nil,
+              :short_form  => '-p',
+              :long_form   => '--path /path/to/iso',
+              :description => 'The local path to the image ISO',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :name,
+              :default     => nil,
+              :short_form  => '-n',
+              :long_form   => '--name IMAGE_NAME',
+              :description => 'The logical name to use (os images only)',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            },
+            { :name        => :version,
+              :default     => nil,
+              :short_form  => '-v',
+              :long_form   => '--version VERSION',
+              :description => 'The version to use (os images only)',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            }
+          ]
+        }.freeze
+      end
+
       def image_help
         if @prev_args.length > 1
           command = @prev_args.peek(1)
           begin
             # load the option items for this command (if they exist) and print them
-            option_items = load_option_items(:command => command.to_sym)
-            print_command_help(@slice_name.downcase, command, option_items)
+            option_items = command_option_data(command)
+            print_command_help(command, option_items)
             return
           rescue
           end
@@ -86,11 +126,14 @@ module ProjectRazor
                                :method => "add_os"},
                        :esxi => {:desc => "VMware Hypervisor ISO",
                                  :classname => "ProjectRazor::ImageService::VMwareHypervisor",
-                                 :method => "add_esxi"}}
+                                 :method => "add_esxi"},
+                       :xenserver => {:desc => "XenServer Hypervisor ISO",
+                               :classname => "ProjectRazor::ImageService::XenServerHypervisor",
+                               :method => "add_xenserver"}}
 
         includes_uuid = false
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :add)
+        option_items = command_option_data(:add)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)
@@ -119,10 +162,10 @@ module ProjectRazor
         res = []
         unless image_type == "os"
           res = self.send image_types[image_type.to_sym][:method], new_image, iso_path,
-                          @data.config.image_svc_path
+                          ProjectRazor.config.image_svc_path
         else
           res = self.send image_types[image_type.to_sym][:method], new_image, iso_path,
-                          @data.config.image_svc_path, os_name, os_version
+                          ProjectRazor.config.image_svc_path, os_name, os_version
         end
 
         raise ProjectRazor::Error::Slice::InternalError, res[1] unless res[0]
@@ -143,6 +186,11 @@ module ProjectRazor
         new_image.add(iso_path, image_svc_path, nil)
       end
 
+      def add_xenserver(new_image, iso_path, image_svc_path)
+        puts "Attempting to add, please wait...".green
+        new_image.add(iso_path, image_svc_path, nil)
+      end
+
       def add_os(new_image, iso_path, image_svc_path, os_name, os_version)
         raise ProjectRazor::Error::Slice::MissingArgument,
               'image name must be included for OS images' unless os_name && os_name != ""
@@ -153,7 +201,6 @@ module ProjectRazor
       end
 
       def insert_image(image_obj)
-        setup_data
         image_obj = @data.persist_object(image_obj)
         image_obj.refresh_self
       end
@@ -180,8 +227,6 @@ module ProjectRazor
         image_uuid = get_uuid_from_prev_args
         raise ProjectRazor::Error::Slice::MissingArgument, '[uuid]' unless image_uuid
 
-        #setup_data
-        #image_selected = @data.fetch_object_by_uuid(:images, image_uuid)
         image_selected = get_object("image_with_uuid", :images, image_uuid)
         unless image_selected && (image_selected.class != Array || image_selected.length > 0)
           raise ProjectRazor::Error::Slice::InvalidUUID, "invalid uuid [#{image_uuid.inspect}]"

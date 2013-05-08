@@ -35,22 +35,6 @@ module ProjectRazor
       hash
     end
 
-    # Iterates and converts BSON:OrderedHash back to vanilla hash / MongoDB specific
-    # @param bson_hash [Hash]
-    # @return [Hash]
-    def bson_to_hash(bson_hash)
-      new_hash = {}
-      bson_hash.each_key do
-      |k|
-        if bson_hash[k].class == BSON::OrderedHash
-          new_hash[k] = bson_to_hash(bson_hash[k])
-        else
-          new_hash[k] = bson_hash[k]
-        end
-      end
-      new_hash
-    end
-
     # Sets instance variables
     # will not include any that start with "_" (Mongo specific)
     # @param [Hash] hash
@@ -72,29 +56,6 @@ module ProjectRazor
       end
     end
 
-    # Validates that all instance variables for the object are not nil
-    def validate_instance_vars
-      flag = true
-      self.instance_variables.each { |iv| flag = false if (self.instance_variable_get(iv) == nil && !iv.to_s.start_with?("@_")) }
-      flag
-    end
-
-    # Returns a true|false on whether the object type is valid
-    # requires that the instance variables for the object have @type & @hidden
-    # @param [String] namespace_prefix
-    # @param [String] type_name
-    # @return [true|false]
-    def is_valid_type?(namespace_prefix, template_name = "default")
-      get_child_types(namespace_prefix).each do
-        |template|
-        return true if template.template.to_s.strip == template_name.strip && !template.hidden
-      end
-      false
-    end
-
-
-    alias :is_valid_template? :is_valid_type?
-
     def new_object_from_template_name(namespace_prefix, object_template_name)
       get_child_types(namespace_prefix).each do
       |template|
@@ -106,22 +67,38 @@ module ProjectRazor
     alias :new_object_from_type_name :new_object_from_template_name
 
 
-    def is_valid_json?(json_string)
-      begin
-        JSON.parse(json_string)
-        return true
-      rescue Exception => e
-        return false
+    def sanitize_hash(in_hash)
+      in_hash.inject({}) {|h, (k, v)| h[k.sub(/^@/, '')] = v; h }
+    end
+
+    def self.encode_symbols_in_hash(obj)
+      case obj
+      when Hash
+        encoded = Hash.new
+        obj.each_pair { |key, value| encoded[key] = encode_symbols_in_hash(value) }
+        encoded
+      when Array
+        obj.map { |item| encode_symbols_in_hash(item) }
+      when Symbol
+        ":#{obj}"
+      else
+        obj
       end
     end
 
-    def sanitize_hash(in_hash)
-      new_hash = {}
-      in_hash.each_key do
-      |k|
-        new_hash[k.sub(/^@/,"")] = in_hash[k]
+    def self.decode_symbols_in_hash(obj)
+      case obj
+      when Hash
+        decoded = Hash.new
+        obj.each_pair { |key, value| decoded[key] = decode_symbols_in_hash(value) }
+        decoded
+      when Array
+        obj.map { |item| decode_symbols_in_hash(item) }
+      when /^:/
+        obj.sub(/^:/, '').to_sym
+      else
+        obj
       end
-      new_hash
     end
   end
 end

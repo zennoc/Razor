@@ -54,25 +54,28 @@ module ProjectRazor
       end
 
       def callback
-        { "yast"     => :yast_call,
-          "postinstall" => :postinstall_call, }
+        {
+          "broker"      => :broker_agent_handoff,
+          "yast"        => :yast_call,
+          "postinstall" => :postinstall_call,
+        }
       end
 
       def broker_agent_handoff
         logger.debug "Broker agent called for: #{@broker.name}"
-        unless @node_ip
+        if @node_ip
+          options = {
+            :username  => "root",
+            :password  => @root_password,
+            :metadata  => node_metadata,
+            :uuid  => @node.uuid,
+            :ipaddress => @node_ip,
+          }
+          @current_state = @broker.agent_hand_off(options)
+        else
           logger.error "Node IP address isn't known"
           @current_state = :broker_fail
-          broker_fsm_log
         end
-        options = {
-          :username  => "root",
-          :password  => @root_password,
-          :metadata  => node_metadata,
-          :uuid  => @node.uuid,
-          :ipaddress => @node_ip,
-        }
-        @current_state = @broker.agent_hand_off(options)
         broker_fsm_log
       end
 
@@ -257,7 +260,7 @@ module ProjectRazor
       end
 
       def config
-        get_data.config
+        ProjectRazor.config
       end
 
       def image_svc_uri

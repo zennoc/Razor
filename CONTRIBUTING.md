@@ -270,5 +270,4 @@ leader.  The details of why are private, and will not be shared.
 [irc]:           https://webchat.freenode.net/?channels=puppet-razor
 [freenode]:      http://freenode.net/
 [exemption]:     http://docs.puppetlabs.com/community/trivial_patch_exemption.html
-[cla]:           https://projects.puppetlabs.com/contributor_licenses/sign
-[redmine]:       https://projects.puppetlabs.com/account/register
+[cla]:           http://links.puppetlabs.com/cla

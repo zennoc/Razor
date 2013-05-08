@@ -1,22 +1,41 @@
 // Node.js Endpoint for ProjectRazor Image Service
 
-var razor_bin = __dirname+ "/razor -w"; // Set project_razor.rb path
-var exec = require("child_process").exec; // create our exec object
+var razor_bin = __dirname + "/razor"; // Set project_razor.rb path
+var execFile = require("child_process").execFile; // create our execFile object
 var express = require('express'); // include our express libs
 var mime = require('mime');
 var fs = require('fs');
+var path = require('path');
 var http_range_req = require('./http_range_req.js');
+var common = require('./common.js');
+var InvalidURIPathError = common.InvalidURIPathError;
+var urlDecode = common.urlDecode;
+var returnError = common.returnError;
 var image_svc_path;
 
 app = express.createServer(); // our express server
 
-app.get('/razor/image/*',
-    function(req, res) {
-        path = decodeURIComponent(req.path.replace(/^\/razor\/image/, image_svc_path));
-        console.log(path);
-        respondWithFile(path, res, req);
-    });
+app.get('/razor/image/*', function(req, res) {
+    try {
+        var args = req.path.split('/');
+        args.splice(0, 3);
+        if (args.length > 0) {
+            if (args[args.length - 1] == '')
+                // Path ended with slash. Just skip this one
+                args.pop();
+            for ( var i = 0; i < args.length; ++i)
+                args[i] = urlDecode(args[i]);
+        }
+        var absPath = path.resolve(image_svc_path + args.join('/'));
+        if(absPath.indexOf(image_svc_path) != 0)
+        	throw new InvalidURIPathError("Illegal path: '" + path + "'");
 
+        console.log("Image requested: '" + absPath + "'");
+        respondWithFile(absPath, res, req);
+    } catch (e) {
+        returnError(res, e);
+    }
+});
 
 function respondWithFile(path, res, req) {
     if (path != null) {
@@ -64,7 +83,7 @@ function respondWithFile(path, res, req) {
 }
 
 function getConfig() {
-    exec(razor_bin + " config read", function (err, stdout, stderr) {
+    execFile(razor_bin, [ '-j', 'config', 'read' ], function(err, stdout, stderr) {
         //console.log(stdout);
         startServer(stdout);
     });
@@ -81,10 +100,10 @@ function getRange() {
 function startServer(json_config) {
     var config = JSON.parse(json_config);
     if (config['@image_svc_port'] != null) {
-        image_svc_path = config['@image_svc_path'];
+        image_svc_path = path.resolve(config['@image_svc_path']) + '/';
         app.listen(config['@image_svc_port']);
         console.log("");
-        console.log('ProjectRazor Image Service Web Server started and listening on:%s', config['@api_port']);
+        console.log('ProjectRazor Image Service Web Server started and listening on:%s', config['@image_svc_port']);
         console.log("Image root path: " + image_svc_path);
     } else {
         console.log("There is a problem with your ProjectRazor configuration. Cannot load config.");

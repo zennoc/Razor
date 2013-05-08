@@ -1,3 +1,7 @@
+require 'project_razor/utility'
+require 'project_razor/logging'
+require 'project_razor/persist/controller'
+
 require "yaml"
 require "singleton"
 
@@ -7,7 +11,6 @@ module ProjectRazor
     include Singleton
     include(ProjectRazor::Utility)
     include(ProjectRazor::Logging)
-    include(ProjectRazor::Filtering)
 
     # {ProjectRazor::Config::Server} object for {ProjectRazor::Data}
     # {ProjectRazor::Controller} object for {ProjectRazor::Data}
@@ -17,18 +20,11 @@ module ProjectRazor
     #  Attempts to load {ProjectRazor::Configuration} and initialize {ProjectRazor::Persist::Controller}
     def initialize
       logger.debug "Initializing object"
-      load_config
       setup_persist
     end
 
     def check_init
-      load_config
       setup_persist if !@persist_ctrl || !@persist_ctrl.check_connection
-    end
-
-    def config
-      load_config
-      @razor_config
     end
 
     # Called when work with {ProjectRazor::Data} is complete
@@ -43,10 +39,9 @@ module ProjectRazor
     # @return [Array]
     def fetch_all_objects(object_symbol)
       logger.debug "Fetching all objects (#{object_symbol})"
-      object_array = []
-      object_hash_array = persist_ctrl.object_hash_get_all(object_symbol)
-      object_hash_array.each { |object_hash| object_array << object_hash_to_object(object_hash) }
-      object_array
+      persist_ctrl.object_hash_get_all(object_symbol).map do |object_hash|
+        object_hash_to_object(object_hash)
+      end
     end
 
     # Fetches a document from database with a specific 'uuid', converts to an object, and returns it
@@ -71,12 +66,8 @@ module ProjectRazor
     # @return [Object, nil]
     def fetch_object_by_uuid_pattern(object_symbol, object_uuid_pattern)
       logger.debug "Fetching object by pattern  (#{object_uuid_pattern}) in collection (#{object_symbol})"
-      found_objects = []
-      fetch_all_objects(object_symbol).each do
-      |object|
-        scan_array = object.uuid.scan(object_uuid_pattern)
-        found_objects << object if scan_array.count > 0
-        #return object if object.uuid == object_uuid
+      found_objects = fetch_all_objects(object_symbol).select do |object|
+        object.uuid.include?(object_uuid_pattern)
       end
       if found_objects.count == 1
         found_objects.first
@@ -86,19 +77,16 @@ module ProjectRazor
 
     end
 
-    # Fetches a document from database using a filter hash - which matches any objects using ProjectRazor::Filtering module
+    # Fetches a document from database using a filter hash - which matches any objects using `check_filter_vs_hash`
     #
     # @param [Symbol] object_symbol
     # @param [Hash] object_filter
     # @return [Object, nil]
     def fetch_objects_by_filter(object_symbol, object_filter)
       logger.debug "Fetching objects by filter (#{object_filter}) in collection (#{object_symbol})"
-      object_array = []
-      fetch_all_objects(object_symbol).each do
-      |object|
-        object_array << object if check_filter_vs_hash(object_filter, object.to_hash)
+      fetch_all_objects(object_symbol).select do |object|
+        check_filter_vs_hash(object_filter, object.to_hash)
       end
-      object_array
     end
 
     # Takes an {ProjectRazor::Object} and creates/persists it within the database.
@@ -112,9 +100,7 @@ module ProjectRazor
         unless options[:multi_collection]
           raise ProjectRazor::Error::MissingMultiCollectionOnGroupPersist, "Missing namespace on multiple object  persist"
         end
-        hash_array = []
-        object.each {|o| hash_array << o.to_hash}
-        persist_ctrl.object_hash_update_multi(hash_array, options[:multi_collection])
+        persist_ctrl.object_hash_update_multi(object.map {|o| o.to_hash }, options[:multi_collection])
         object.each {|o| o._persist_ctrl = persist_ctrl && (o.refresh_self if options[:refresh])}
         object.each {|o| o.refresh_self} if options[:refresh]
       else
@@ -186,109 +172,73 @@ module ProjectRazor
     # @return [ProjectRazor::Persist::Controller, ProjectRazor]
     def setup_persist
       logger.debug "Persist controller init"
-      @persist_ctrl = ProjectRazor::Persist::Controller.new(config)
+      @persist_ctrl = ProjectRazor::Persist::Controller.new
     end
 
-    # Attempts to load the './conf/razor_server.conf' YAML file into @config
-    # @api private
-    #
-    # @return [ProjectRazor::Config::Server, ProjectRazor]
-    def load_config
-      logger.debug "Loading config at (#{$config_server_path}"
-      loaded_config = nil
-      if File.exist?($config_server_path)
-        begin
-          conf_file = File.open($config_server_path)
-          #noinspection RubyResolve,RubyResolve
-          loaded_config = YAML.load(conf_file)
-            # We catch the basic root errors
-        rescue SyntaxError
-          logger.warn "SyntaxError loading (#{$config_server_path})"
-          loaded_config = nil
-        rescue StandardError
-          logger.warn "Generic error loading (#{$config_server_path})"
-          loaded_config = nil
-        ensure
-          conf_file.close
-        end
-      end
 
-      # If our object didn't load we run our config reset
-      if loaded_config.is_a?(ProjectRazor::Config::Server)
-        if loaded_config.validate_instance_vars
-          # ensure that missing key/value pairs (if any) from the existing configuration
-          # are filled in using default values
-          new_conf = ProjectRazor::Config::Server.new
-          merge_config_params(new_conf, loaded_config)
-          @razor_config = loaded_config
+    # Uses a provided Filter Hash to match against an Object hash
+    # @param filter_hash [Hash]
+    # @param object_hash [Hash]
+    def check_filter_vs_hash(filter_hash, object_hash, loop = false)
+      object_hash = sanitize_hash(object_hash)
+      filter_hash = sanitize_hash(filter_hash)
+      # Iterate over each key/value checking if there is a match within the object_hash level
+      # if we run into a key/value that is a hash we check for a matching hash and call this same method
+      filter_hash.each_key do |filter_key|
+        logger.debug "looking for key: #{filter_key}"
+        # Find a matching key / return false if there is none
+
+        unless object_hash.has_key? filter_key
+          logger.debug "not found: #{filter_key}"
+          return false
+        end
+
+        logger.debug "found: #{filter_key} #{object_hash.class.to_s}"
+
+        # If our keys match and the values are Hashes then iterate again catching the return and
+        # passing if it is False
+        if filter_hash[filter_key].class == Hash && object_hash[filter_key].class == Hash
+          # Check deeper, setting the loop value to prevent changing the key prefix
+          logger.debug "both values are hash, going deeper"
+          return false if !check_filter_vs_hash(filter_hash[filter_key], object_hash[filter_key], true)
         else
-          logger.warn "Config parameter validation error loading (#{$config_server_path})"
-          logger.warn "Resetting (#{$config_server_path}) and loading default config"
-          reset_config
-        end
-      else
-        logger.warn "Cannot load (#{$config_server_path})"
 
-        reset_config
+          # Eval if our keys (one of which isn't a Hash) match
+          # We accept either exact or Regex match
+          # If the filter key value is empty we are ok with it just existing and return true
+
+          if filter_hash[filter_key] != ""
+            begin
+              logger.debug "Looking for match: #{filter_hash[filter_key]} : #{object_hash[filter_key]}"
+              if filter_hash[filter_key].class == Hash || object_hash[filter_key].class == Hash
+                logger.debug "one of these is a hash when the other isn't"
+                return false
+              end
+
+              # If the filter_hash[filter_key] value is a String and it starts with 'regex:'
+              # then use a regular expression for comparison; else compare as literals
+              if filter_hash[filter_key].class == String && filter_hash[filter_key].start_with?('regex:')
+                regex_key = filter_hash[filter_key].sub(/^regex:/,"")
+                if Regexp.new(regex_key).match(object_hash[filter_key]) == nil
+                  logger.debug "no match - regex"
+                  return false
+                end
+              else
+                if filter_hash[filter_key] != object_hash[filter_key]
+                  logger.debug "no match - literal"
+                  return false
+                end
+              end
+            rescue => e
+              # Error encountered - likely nil or Hash -> String / return false as this means key != key
+              logger.error e.message
+              return false
+            end
+          end
+        end
       end
+      logger.debug "match found"
+      true
     end
-
-    # Creates new 'razor_server.conf' if one does not already exist
-    # @api private
-    #
-    # @return [ProjectRazor::Config::Server, ProjectRazor]
-    def reset_config
-      logger.warn "Resetting (#{$config_server_path}) and loading default config"
-      # use default init
-      new_conf = ProjectRazor::Config::Server.new
-
-      # Very important that we only write the file if it doesn't exist as we may not be the only thread using it
-      unless File.exist?($config_server_path)
-        begin
-          new_conf_file = File.new($config_server_path, 'w+')
-          new_conf_file.write(("#{new_conf_header}#{YAML.dump(new_conf)}"))
-          new_conf_file.close
-          logger.info "Default config saved to (#{$config_server_path})"
-        rescue
-          logger.error "Cannot save default config to (#{$config_server_path})"
-        end
-      else
-        merge_config_params(new_conf, @razor_config)
-      end
-      @razor_config = new_conf
-    end
-
-    # Merges key/value pairs from the new_config Hash map into the existing_config
-    # Hash map.  Conflicts between the two Hash maps are handled based on the
-    # value of the "overwrite_existing" flag:
-    #     - by default (or with this flag set to false), this method looks through
-    #       the new_config keys and maps values for any key that DOES NOT EXIST in
-    #       the existing_config Hash map to an equivalent key/value pair the
-    #       existing_config Hash map (this has the effect of setting key/value
-    #       pairs that do not exist in the existing_config to their default values,
-    #       which can be found in the 'ProjectRazor::Config::Server.use_defaults'
-    #       method)
-    #     - with the overwrite_existing flag set to true, any key/value pair that
-    #       DOES exist in the existing_config Hash map is overwritten by the equivalent
-    #       key/value pair from the new_config Hash map (this has the effect of
-    #       resetting all configuration parameters to their default values); Note that
-    #       this functionality is not currently used (and there might be faster ways to
-    #       accomplish the same thing) but we included it in case it's needed later
-    def merge_config_params(new_config, existing_config, overwrite_existing = false)
-      new_config.keys.each { |key|
-        if overwrite_existing || !(existing_config.include?(key))
-          existing_config[key] = new_config[key]
-        end
-      }
-    end
-
-    # Returns a header for new 'razor_server.conf' files
-    # @api private
-    #
-    # @return [ProjectRazor::Config::Server, ProjectRazor]
-    def new_conf_header
-      "\n# This file is the main configuration for ProjectRazor\n#\n# -- this was system generated --\n#\n#\n"
-    end
-
   end
 end
