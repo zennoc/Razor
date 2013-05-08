@@ -1,6 +1,6 @@
 # Project Razor
 
-[![Build Status](https://jenkins.puppetlabs.com/job/Razor%20Acceptance/badge/icon)](https://jenkins.puppetlabs.com/job/Razor%20Acceptance/)
+[![Build Status](https://jenkins.puppetlabs.com/job/razor-acceptance-matrix/badge/icon)
 
 ## Introduction
 
@@ -75,7 +75,7 @@ into any errors or omissions in that list.
 * The Razor MicroKernel project:
 [https://github.com/puppetlabs/Razor-Microkernel](https://github.com/puppetlabs/Razor-Microkernel)
 * The Razor MK images are officially available at:
-[https://github.com/puppetlabs/Razor-Microkernel/downloads](https://github.com/puppetlabs/Razor-Microkernel/downloads)
+[https://downloads.puppetlabs.com/razor/](https://downloads.puppetlabs.com/razor/)
 
 ## Environment Variables
 * $RAZOR\_HOME: Razor installation root directory.

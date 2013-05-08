@@ -12,9 +12,10 @@
 require 'rubygems'
 require 'daemons'
 require 'json'
+require 'pathname'
 
 # add our the Razor lib path to the load path. This is for non-gem ease of use
-bin_dir = File.dirname(File.expand_path(__FILE__))
+bin_dir = Pathname(__FILE__).realpath.dirname.to_s
 lib_path = bin_dir.sub(/\/bin$/,"/lib")
 $LOAD_PATH.unshift(lib_path)
 # We require the root lib
@@ -110,7 +111,7 @@ end
 class RazorDaemon < ProjectRazor::Object
   include Singleton
 
-  BIN_DIR = File.dirname(File.expand_path(__FILE__))
+  BIN_DIR = Pathname(__FILE__).realpath.dirname.to_s
   NODE_COMMAND = %x[which nodejs || which node].strip
   NODE_INSTANCE_NAMES = %W[api.js image_svc.js]
   NODE_COMMAND_MAP = { 'api.js' => "#{NODE_COMMAND} #{BIN_DIR}/api.js",
@@ -118,7 +119,7 @@ class RazorDaemon < ProjectRazor::Object
 
   # used to obtain a copy of the Razor configuration
   def get_config
-    resp = %x[#{BIN_DIR}/razor -w config]
+    resp = %x[#{BIN_DIR}/razor -j config]
     JSON.parse(resp)
   end
 
@@ -181,8 +182,14 @@ class RazorDaemon < ProjectRazor::Object
   # used to shut down all "node-related" processes in the system during
   # the process of shutting down this daemon
   def shutdown_node_instances
-    puts "Shutting down node instances using command 'killall -2 node'"
-    %x[killall -2 node]
+    node_proc_info = get_node_instance_info
+    if node_proc_info.size > 0
+      NODE_INSTANCE_NAMES.each do |node|
+        if node_proc_info.key?(node)
+          Process.kill('INT', Integer(node_proc_info[node][0]))
+        end
+      end
+    end
   end
 
   private

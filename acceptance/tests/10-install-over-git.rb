@@ -27,16 +27,15 @@ end
 # option; while installation is still so full of random "install from
 # upstream" bits, we have to run the full module to get a sane install.
 step "install razor from git"
-on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %Q'
-class { sudo:
-    config_file_replace => false,
-}
+mk_url = if ENV['INSTALL_MODE'] == 'internal-packages' then
+           "http://neptune.puppetlabs.lan/dev/razor/iso/#{ENV['isobuild'] || 'current'}/#{ENV['mkflavour'] || 'prod'}/razor-microkernel-latest.iso"
+         else
+           "https://downloads.puppetlabs.com/razor/builds/iso/#{ENV['mkflavour'] || 'prod'}/razor-microkernel-latest.iso"
+         end
 
-class { razor:
-  source    => git,
-  username  => razor,
-  mk_source => "https://github.com/downloads/puppetlabs/Razor-Microkernel/rz_mk_prod-image.0.9.0.4.iso",
-}
+on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %Q'
+class { sudo: config_file_replace => false }
+class { razor: source => git, username => razor, mk_source => "#{mk_url}" }
 '
 
 step "Ensure we fail to install the package!"
@@ -44,7 +43,7 @@ step "Ensure we fail to install the package!"
 # in 3.0.2 ralsh kinda sucks: http://projects.puppetlabs.com/issues/18937
 # --daniel 2013-01-28
 on razor, puppet_resource('package', 'puppet-razor', 'ensure=latest') do
-  unless stdout =~ /ensure => 'absent'/ or stderr =~ /ensure => 'absent'/ then
+  unless (stdout + stderr) =~ /ensure => '(absent|purged)'/ then
     fail_test("I guess maybe we installed something when we shouldn't have, maybe?")
   end
 end

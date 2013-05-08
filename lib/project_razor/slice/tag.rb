@@ -11,10 +11,12 @@ module ProjectRazor
       def initialize(args)
         super(args)
         @hidden = false
-        @slice_name = "Tag"
+      end
+
+      def slice_commands
         # get the slice commands map for this slice (based on the set
         # of commands that are typical for most slices)
-        @slice_commands = get_command_map("tag_help",
+        commands = get_command_map("tag_help",
                                           "get_all_tagrules",
                                           "get_tagrule_by_uuid",
                                           "add_tagrule",
@@ -23,49 +25,160 @@ module ProjectRazor
                                           "remove_tagrule_by_uuid")
         # and add the corresponding 'matcher' commands to the set of slice_commands
         tag_uuid_match = /^((?!(matcher|add|get|remove|update|default)))\S+/
-        @slice_commands[tag_uuid_match] = {}
-        @slice_commands[tag_uuid_match][:default] = "get_tagrule_by_uuid"
-        @slice_commands[tag_uuid_match][:else] = "get_tagrule_by_uuid"
-        @slice_commands[tag_uuid_match][:matcher] = {}
+        commands[tag_uuid_match] = {}
+        commands[tag_uuid_match][:default] = "get_tagrule_by_uuid"
+        commands[tag_uuid_match][:else] = "get_tagrule_by_uuid"
+        commands[tag_uuid_match][:matcher] = {}
         # add a few more commands to support the use of "tag matcher" help without
         # having to include a tag UUID in the help command (i.e. commands like
         # "razor tag matcher update --help" or "razor tag matcher add --help")
-        @slice_commands[:matcher] = {}
-        @slice_commands[:matcher][:else] = "tag_help"
-        @slice_commands[:matcher][:default] = "tag_help"
+        commands[:matcher] = {}
+        commands[:matcher][:else] = "tag_help"
+        commands[:matcher][:default] = "tag_help"
         # adding a tag matcher
-        @slice_commands[tag_uuid_match][:matcher][:add] = {}
-        @slice_commands[tag_uuid_match][:matcher][:add][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:add][:default] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:add][:else] = "add_matcher"
+        commands[tag_uuid_match][:matcher][:add] = {}
+        commands[tag_uuid_match][:matcher][:add][/^(--help|-h)$/] = "tag_help"
+        commands[tag_uuid_match][:matcher][:add][:default] = "tag_help"
+        commands[tag_uuid_match][:matcher][:add][:else] = "add_matcher"
         # add support for the "tag matcher update help" commands
-        @slice_commands[:matcher][:add] = {}
-        @slice_commands[:matcher][:add][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[:matcher][:add][:default] = "throw_syntax_error"
-        @slice_commands[:matcher][:add][:else] = "throw_syntax_error"
+        commands[:matcher][:add] = {}
+        commands[:matcher][:add][/^(--help|-h)$/] = "tag_help"
+        commands[:matcher][:add][:default] = "throw_syntax_error"
+        commands[:matcher][:add][:else] = "throw_syntax_error"
         # updating a tag matcher
-        @slice_commands[tag_uuid_match][:matcher][:update] = {}
-        @slice_commands[tag_uuid_match][:matcher][:update][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:update][:default] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:update][/^(?!^(all|\-\-help|\-h)$)\S+$/] = "update_matcher"
+        commands[tag_uuid_match][:matcher][:update] = {}
+        commands[tag_uuid_match][:matcher][:update][/^(--help|-h)$/] = "tag_help"
+        commands[tag_uuid_match][:matcher][:update][:default] = "tag_help"
+        commands[tag_uuid_match][:matcher][:update][/^(?!^(all|\-\-help|\-h)$)\S+$/] = "update_matcher"
         # add support for the "tag matcher update help" commands
-        @slice_commands[:matcher][:update] = {}
-        @slice_commands[:matcher][:update][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[:matcher][:update][:default] = "throw_syntax_error"
-        @slice_commands[:matcher][:update][:else] = "throw_syntax_error"
+        commands[:matcher][:update] = {}
+        commands[:matcher][:update][/^(--help|-h)$/] = "tag_help"
+        commands[:matcher][:update][:default] = "throw_syntax_error"
+        commands[:matcher][:update][:else] = "throw_syntax_error"
         # removing a tag matcher
-        @slice_commands[tag_uuid_match][:matcher][:remove] = {}
-        @slice_commands[tag_uuid_match][:matcher][:remove][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:remove][:default] = "tag_help"
-        @slice_commands[tag_uuid_match][:matcher][:remove][/^(?!^(all|\-\-help|\-h)$)\S+$/] = "remove_matcher"
+        commands[tag_uuid_match][:matcher][:remove] = {}
+        commands[tag_uuid_match][:matcher][:remove][/^(--help|-h)$/] = "tag_help"
+        commands[tag_uuid_match][:matcher][:remove][:default] = "tag_help"
+        commands[tag_uuid_match][:matcher][:remove][/^(?!^(all|\-\-help|\-h)$)\S+$/] = "remove_matcher"
         # add support for the "tag matcher remove help" commands
-        @slice_commands[:matcher][:remove] = {}
-        @slice_commands[:matcher][:remove][/^(--help|-h)$/] = "tag_help"
-        @slice_commands[:matcher][:remove][:default] = "throw_syntax_error"
-        @slice_commands[:matcher][:remove][:else] = "throw_syntax_error"
+        commands[:matcher][:remove] = {}
+        commands[:matcher][:remove][/^(--help|-h)$/] = "tag_help"
+        commands[:matcher][:remove][:default] = "throw_syntax_error"
+        commands[:matcher][:remove][:else] = "throw_syntax_error"
         # getting a tag matcher
-        @slice_commands[tag_uuid_match][:matcher][:else] = "get_matcher_by_uuid"
-        @slice_commands[tag_uuid_match][:matcher][:default] = "throw_missing_uuid_error"
+        commands[tag_uuid_match][:matcher][:else] = "get_matcher_by_uuid"
+        commands[tag_uuid_match][:matcher][:default] = "throw_missing_uuid_error"
+
+        commands
+      end
+
+      def all_command_option_data
+        {
+          :add => [
+            { :name        => :name,
+              :default     => false,
+              :short_form  => '-n',
+              :long_form   => '--name NAME',
+              :description => 'Name for the tagrule being created',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :tag,
+              :default     => false,
+              :short_form  => '-t',
+              :long_form   => '--tag TAG',
+              :description => 'Tag for the tagrule being created',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            }
+          ],
+          :update => [
+            { :name        => :name,
+              :default     => nil,
+              :short_form  => '-n',
+              :long_form   => '--name NAME',
+              :description => 'New name for the tagrule being updated.',
+              :uuid_is     => 'required',
+              :required    => true
+            },
+            { :name        => :tag,
+              :default     => nil,
+              :short_form  => '-t',
+              :long_form   => '--tag TAG',
+              :description => 'New tag for the tagrule being updated.',
+              :uuid_is     => 'required',
+              :required    => true
+            }
+          ],
+          :add_matcher => [
+            { :name        => :key,
+              :default     => nil,
+              :short_form  => '-k',
+              :long_form   => '--key KEY_FIELD',
+              :description => 'The node attribute key to match against.',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :compare,
+              :default     => nil,
+              :short_form  => '-c',
+              :long_form   => '--compare METHOD',
+              :description => 'The comparison method to use (\'equal\'|\'like\').',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :value,
+              :default     => nil,
+              :short_form  => '-v',
+              :long_form   => '--value VALUE',
+              :description => 'The value to match against',
+              :uuid_is     => 'not_allowed',
+              :required    => true
+            },
+            { :name        => :inverse,
+              :default     => nil,
+              :short_form  => '-i',
+              :long_form   => '--inverse VALUE',
+              :description => 'Inverse the match (true if key does not match value).',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            }
+          ],
+          :update_matcher => [
+            { :name        => :key,
+              :default     => nil,
+              :short_form  => '-k',
+              :long_form   => '--key KEY_FIELD',
+              :description => 'The new node attribute key to match against.',
+              :uuid_is     => 'required',
+              :required    => true
+            },
+            { :name        => :compare,
+              :default     => nil,
+              :short_form  => '-c',
+              :long_form   => '--compare METHOD',
+              :description => 'The new comparison method to use (\'equal\'|\'like\').',
+              :uuid_is     => 'required',
+              :required    => true
+            },
+            { :name        => :value,
+              :default     => nil,
+              :short_form  => '-v',
+              :long_form   => '--value VALUE',
+              :description => 'The new value to match against.',
+              :uuid_is     => 'required',
+              :required    => true
+            },
+            { :name        => :inverse,
+              :default     => nil,
+              :short_form  => '-i',
+              :long_form   => '--inverse VALUE',
+              :description => 'Inverse the match (true|false).',
+              :uuid_is     => 'required',
+              :required    => true
+            }
+          ]
+        }.freeze
       end
 
       def tag_help
@@ -77,9 +190,9 @@ module ProjectRazor
             # the command update_matcher (or add_matcher) actually appears on the CLI as
             # the command razor tag (UUID) matcher update (or add), so need to split on the
             # underscore character and swap the order when printing the command usage
-            option_items = load_option_items(:command => command.to_sym)
+            option_items = command_option_data(command)
             command, subcommand = command.split("_")
-            print_command_help(@slice_name.downcase, command, option_items, subcommand)
+            print_command_help(command, option_items, subcommand)
             return
           rescue
           end
@@ -129,7 +242,7 @@ module ProjectRazor
         @command = :add_tagrule
         includes_uuid = false
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :add)
+        option_items = command_option_data(:add)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)
@@ -144,7 +257,6 @@ module ProjectRazor
         # then persist the tagrule object
         tagrule = ProjectRazor::Tagging::TagRule.new({"@name" => options[:name], "@tag" => options[:tag]})
         raise(ProjectRazor::Error::Slice::CouldNotCreate, "Could not create Tag Rule") unless tagrule
-        setup_data
         @data.persist_object(tagrule)
         print_object_array([tagrule], "", :success_type => :created)
       end
@@ -153,7 +265,7 @@ module ProjectRazor
         @command = :update_tagrule
         includes_uuid = false
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :update)
+        option_items = command_option_data(:update)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return the options map constructed
         # from the @commmand_array)
@@ -186,7 +298,6 @@ module ProjectRazor
         tagrule_uuid = get_uuid_from_prev_args
         tagrule = get_object("tagrule_with_uuid", :tag, tagrule_uuid)
         raise ProjectRazor::Error::Slice::InvalidUUID, "Cannot Find Tag Rule with UUID: [#{tagrule_uuid}]" unless tagrule && (tagrule.class != Array || tagrule.length > 0)
-        setup_data
         raise ProjectRazor::Error::Slice::CouldNotRemove, "Could not remove Tag Rule [#{tagrule.uuid}]" unless @data.delete_object(tagrule)
         slice_success("Tag Rule [#{tagrule.uuid}] removed", :success_type => :removed)
       end
@@ -196,7 +307,6 @@ module ProjectRazor
 
       def find_matcher(matcher_uuid)
         found_matcher = []
-        setup_data
         @data.fetch_all_objects(:tag).each do
         |tr|
           tr.tag_matchers.each do
@@ -221,7 +331,7 @@ module ProjectRazor
         includes_uuid = false
         tagrule_uuid = @prev_args.peek(2)
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :add_matcher)
+        option_items = command_option_data(:add_matcher)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)
@@ -234,7 +344,7 @@ module ProjectRazor
         key = options[:key]
         compare = options[:compare]
         value = options[:value]
-        inverse = (options[:invert] == nil ? "false" : options[:invert])
+        inverse = (options[:inverse] == nil ? "false" : options[:inverse])
 
         # check the values that were passed in
         tagrule = get_object("tagrule_with_uuid", :tag, tagrule_uuid)
@@ -251,7 +361,7 @@ module ProjectRazor
         includes_uuid = false
         tagrule_uuid = @prev_args.peek(2)
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :update_matcher)
+        option_items = command_option_data(:update_matcher)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)
@@ -265,17 +375,17 @@ module ProjectRazor
         key = options[:key]
         compare = options[:compare]
         value = options[:value]
-        invert = options[:invert]
+        inverse = options[:inverse]
 
         # check the values that were passed in
         matcher, tagrule = find_matcher(matcher_uuid)
         raise ProjectRazor::Error::Slice::InvalidUUID, "Cannot find Tag Matcher with UUID [#{matcher_uuid}]" unless matcher
         raise ProjectRazor::Error::Slice::MissingArgument, "Option for --compare must be [equal|like]" unless !compare || compare == "equal" || compare == "like"
-        raise ProjectRazor::Error::Slice::MissingArgument, "Option for --invert must be [true|false]" unless !invert || invert == "true" || invert == "false"
+        raise ProjectRazor::Error::Slice::MissingArgument, "Option for --inverse must be [true|false]" unless !inverse || inverse == "true" || inverse == "false"
         matcher.key = key if key
         matcher.compare = compare if compare
         matcher.value = value if value
-        matcher.inverse = invert if invert
+        matcher.inverse = inverse if inverse
         if tagrule.update_self
           print_object_array([matcher], "Tag Matcher updated [#{matcher.uuid}]\nTag Rule:", :success_type => :updated)
         else

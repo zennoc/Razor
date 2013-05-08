@@ -156,19 +156,92 @@ module ProjectRazor
       # section of the line that matches if there is a match)
       LOG_LINE_REGEXP = /^[A-Z]\,\s+\[([^\s]+)\s+\#[0-9]+\]\s+([A-Z]+)\s+\-\-\s+([^\s\#]+)\#([^\:]+)\:\s+(.*)$/
 
-      # Initializes ProjectRazor::Slice::Log including #slice_commands, #slice_commands_help, & #slice_name
+      # Initializes ProjectRazor::Slice::Log including #slice_commands, #slice_commands_help
       # @param [Array] args
       def initialize(args)
 
         super(args)
         @hidden = false
 
-        @slice_name = "Log"
         @logfile = File.join(get_logfile_path, "project_razor.log")
-        @slice_commands = { :get => "get_razor_log",
-                            :default => :get,
-                            :else => :get
+      end
+
+      def slice_commands
+        { :get => "get_razor_log",
+          :default => :get,
+          :else => :get
         }
+      end
+
+      def all_command_option_data
+        {
+          :get_razor_log => [
+            { :name        => :tail,
+              :default     => nil,
+              :short_form  => '-t',
+              :long_form   => '--tail NLINES',
+              :description => 'The number of lines to tail.',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            },
+            { :name        => :log_level,
+              :default     => nil,
+              :short_form  => '-l',
+              :long_form   => '--log-level LOG_LEVEL',
+              :description => 'The log level pattern/value.',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            },
+            { :name        => :class_name,
+              :default     => nil,
+              :short_form  => '-c',
+              :long_form   => '--class-name CLASS_NAME',
+              :description => 'The class name pattern/value.',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            },
+            { :name        => :method_name,
+              :default     => nil,
+              :short_form  => '-m',
+              :long_form   => '--method-name METHOD_NAME',
+              :description => 'The method name pattern/value.',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            },
+            { :name        => :log_message,
+              :default     => nil,
+              :short_form  => '-g',
+              :long_form   => '--log-message LOG_LEVEL',
+              :description => 'The log message pattern/value.',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            },
+            { :name        => :elapsed_time,
+              :default     => nil,
+              :short_form  => '-e',
+              :long_form   => '--elapsed-time ELAPSED_TIME',
+              :description => 'The elapsed time limit (for messages).',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            },
+            { :name        => :filter_before_tail,
+              :default     => false,
+              :short_form  => '-n',
+              :long_form   => '--filter-before-tail',
+              :description => 'Apply filter before tailing (default).',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            },
+            { :name        => :tail_before_filter,
+              :default     => false,
+              :short_form  => '-r',
+              :long_form   => '--tail-before-filter',
+              :description => 'Apply tail before filtering.',
+              :uuid_is     => 'not_allowed',
+              :required    => false
+            }
+          ]
+        }.freeze
       end
 
       # uses the location of the Razor configuration file to determine the path to the
@@ -203,7 +276,7 @@ module ProjectRazor
         end
 
         # load the appropriate option items for the subcommand we are handling
-        option_items = load_option_items(:command => :get_razor_log)
+        option_items = command_option_data(:get_razor_log)
         # parse and validate the options that were passed in as part of this
         # subcommand (this method will return a UUID value, if present, and the
         # options map constructed from the @commmand_array)

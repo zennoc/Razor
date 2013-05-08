@@ -1,3 +1,5 @@
+require 'project_razor'
+
 module ProjectRazor
   module Persist
     # Persistence Controller for ProjectRazor
@@ -8,11 +10,14 @@ module ProjectRazor
       attr_accessor :config
 
       # Initializes the controller and configures the correct '@database' object based on the 'persist_mode' specified in the config
-      # @param config [ProjectRazor::Configuration]
-      def initialize(config)
+      def initialize()
         logger.debug "Initializing object"
         # copy config into instance
-        @config = config
+        #
+        # @todo danielp 2013-03-13: well, this seems less helpful now that
+        # config has a sane global accessor, but whatever.  Keeping this
+        # reduces code churn right this second.
+        @config = ProjectRazor.config
 
         # init correct database object
         if (config.persist_mode == :mongo)
@@ -60,8 +65,8 @@ module ProjectRazor
 
       # Connect to database using ProjectRazor::Persist::Database::Plugin loaded
       def connect_database
-        logger.debug "Connecting to database(#{@config.persist_host}:@config.persist_port) with timeout(#{@config.persist_timeout})"
-        @database.connect(@config.persist_host, @config.persist_port, @config.persist_timeout)
+        logger.debug "Connecting to database(#{@config.persist_username}#{@config.persist_host}:#{@config.persist_port}) with timeout(#{@config.persist_timeout})"
+        @database.connect(@config.persist_host, @config.persist_port, @config.persist_username, @config.persist_password, @config.persist_timeout)
       end
 
 

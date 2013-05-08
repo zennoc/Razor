@@ -8,16 +8,15 @@ source = case ENV['INSTALL_MODE']
 test_name "Install razor (with #{source})"
 
 step "install razor"
-on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %Q'
-class { sudo:
-    config_file_replace => false,
-}
+mk_url = if ENV['INSTALL_MODE'] == 'internal-packages' then
+           "http://neptune.puppetlabs.lan/dev/razor/iso/#{ENV['isobuild'] || 'current'}/#{ENV['mkflavour'] || 'prod'}/razor-microkernel-latest.iso"
+         else
+           "https://downloads.puppetlabs.com/razor/builds/iso/#{ENV['mkflavour'] || 'prod'}/razor-microkernel-latest.iso"
+         end
 
-class { razor:
-  source    => #{source},
-  username  => razor,
-  mk_source => "https://github.com/downloads/puppetlabs/Razor-Microkernel/rz_mk_prod-image.0.9.0.4.iso",
-}
+on hosts('razor-server'), puppet_apply("--verbose"), :stdin => %Q'
+class { sudo: config_file_replace => false }
+class { razor: source => #{source}, username => razor, mk_source => "#{mk_url}" }
 '
 
 step "validate razor installation"
@@ -26,4 +25,4 @@ on hosts('razor-server'), "/opt/razor/bin/razor_daemon.rb status" do
 end
 
 step "copy the spec tests from git to the test host"
-scp_to(hosts('razor-server'), "#{ENV['WORKSPACE']}/spec", '/opt/razor')
+scp_to(hosts('razor-server'), "#{ENV['WORKSPACE']}/acceptance-spec", '/opt/razor')
